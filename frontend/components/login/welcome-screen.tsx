@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
+import { Drawer } from "@base-ui/react/drawer";
+import { Eye, EyeOff } from "lucide-react";
 import { cn } from "cn";
 import { api } from "@/lib/api";
+import { JOURNAL_STICKERS } from "@/lib/journal-art";
 
-type AuthVariant = "create" | "google" | "apple";
+type AuthVariant = "create" | "google" | "apple" | "email";
 
 const springTransition = {
   type: "spring" as const,
@@ -39,8 +42,10 @@ const AuthButton = ({
       "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
       variant === "create" && "bg-[#121212] px-8 text-[15px] text-[#FBF7F0]",
       variant === "google" &&
-        "border border-[#747775] bg-white px-8 text-[15px] font-medium tracking-[0.25px] text-[#1F1F1F]",
+        "border border-[#747775] bg-white px-8 text-[16px] text-[#1F1F1F]",
       variant === "apple" && "bg-black px-8 text-[16px] text-white",
+      variant === "email" &&
+        "border border-[#DDD2C0] bg-[#FBF7F0] px-8 text-[15px] text-[#4A3B2E]",
     )}
   >
     {label}
@@ -51,54 +56,87 @@ const Notebook = ({ ownerName }: { ownerName: string | null }) => (
   <div className="relative w-[354px] max-w-full">
     <div
       aria-hidden="true"
-      className="absolute -top-5 left-3 -z-10 h-[500px] w-[320px] rotate-[-1.34deg] bg-[#CCCCCC] motion-reduce:rotate-0"
+      className="absolute top-[-3.5%] left-[2%] -z-10 h-[84.2%] w-[80.2%] rotate-[-1.34deg] bg-[#CCCCCC] motion-reduce:rotate-0"
     />
-    <div className="relative z-10 h-[512px] w-full overflow-hidden rounded-[8px_20px_20px_8px] bg-[#416E51] shadow-[0_4px_4px_#00000040] rotate-[1.67deg] motion-reduce:rotate-0">
-      <div aria-hidden="true" className="absolute inset-y-0 left-[10px] w-[11px] bg-black/[0.09]" />
-      <div className="relative flex h-full flex-col justify-end gap-3 px-10 pb-[27px]">
-        <p className="text-center font-sans text-[44px] leading-[1.05] font-extrabold tracking-[-0.5px] text-[#21C45D]">
-          SIDE QUEST
+    <div className="@container relative z-10 aspect-[354/512] w-full overflow-hidden rounded-[8px_20px_20px_8px] border-t border-white/[0.45] bg-[#416E51] shadow-[0_4px_4px_#00000040] rotate-[1.67deg] motion-reduce:rotate-0">
+      <p className="absolute top-[29.36%] left-[20.89%] font-sans text-[19.87cqw] leading-[1.05] font-black tracking-[-0.677cqw] text-[#21C45D]">
+        SIDE
+      </p>
+      <p className="absolute top-[39.97%] left-[20.89%] font-sans text-[19.87cqw] leading-[1.05] font-black tracking-[-1.13cqw] text-[#21C45D]">
+        QUEST
+      </p>
+      <div className="absolute top-[76.42%] left-[13.42%] flex h-[18.36%] w-[77.4%] flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#DDD2C0] bg-[#FBF7F0] px-4">
+        <p
+          aria-live="polite"
+          className="flex h-[47px] w-full items-end justify-center font-hand text-[15.54cqw] leading-none text-[#4A3B2E]"
+        >
+          <AnimatePresence>
+            {ownerName ? (
+              <motion.span
+                key={ownerName}
+                initial={{ opacity: 0, transform: "translateY(6px) scale(0.96)" }}
+                animate={{ opacity: 1, transform: "translateY(0px) scale(1)" }}
+                transition={springTransition}
+              >
+                {ownerName}
+              </motion.span>
+            ) : null}
+          </AnimatePresence>
         </p>
-        <div className="flex h-[94px] w-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#DDD2C0] bg-[#FBF7F0] px-4">
-          <p
-            aria-live="polite"
-            className="flex h-[47px] w-full items-end justify-center font-hand text-[55px] leading-none text-[#4A3B2E]"
-          >
-            <AnimatePresence>
-              {ownerName ? (
-                <motion.span
-                  key={ownerName}
-                  initial={{ opacity: 0, transform: "translateY(6px) scale(0.96)" }}
-                  animate={{ opacity: 1, transform: "translateY(0px) scale(1)" }}
-                  transition={springTransition}
-                >
-                  {ownerName}
-                </motion.span>
-              ) : null}
-            </AnimatePresence>
+        <div className="flex w-full flex-col items-center gap-1">
+          <div className="h-0.5 w-[89.4%] max-w-full bg-[#262626]" />
+          <p className="text-center font-sans text-[4.52cqw] leading-[1.05] font-light tracking-[-0.141cqw] text-black">
+            This book belongs to
           </p>
-          <div className="flex w-full flex-col items-center gap-1">
-            <div className="h-0.5 w-[245px] max-w-full bg-[#262626]" />
-            <p className="text-center font-sans text-[16px] leading-[1.05] font-light tracking-[-0.5px] text-black">
-              This book belongs to
-            </p>
-          </div>
         </div>
       </div>
+      {JOURNAL_STICKERS.filter((sticker) => sticker.layer === 1).map((sticker) => (
+        <img
+          key={sticker.id}
+          src={sticker.src}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className={sticker.className}
+        />
+      ))}
+      <div
+        aria-hidden="true"
+        className="absolute inset-y-0 left-[2.89%] z-[2] w-[3.11%] bg-black/[0.09]"
+      />
+      {JOURNAL_STICKERS.filter((sticker) => sticker.layer === 3).map((sticker) => (
+        <img
+          key={sticker.id}
+          src={sticker.src}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className={sticker.className}
+        />
+      ))}
     </div>
   </div>
 );
 
+const LAST_NAME_KEY = "sidequest.lastName";
+
 const inputCls =
   "h-12 w-full rounded-2xl border border-[#DDD2C0] bg-[#FBF7F0] px-4 font-sans text-[15px] text-[#4A3B2E] outline-none placeholder:text-[#B7AA97] focus:border-[#4A3B2E]";
 
+const passwordInputCls = cn(inputCls, "pr-12");
+
 export const WelcomeScreen = () => {
   const router = useRouter();
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<"signin" | "register">("signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [signedInName, setSignedInName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
+  const [emailSheetOpen, setEmailSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -109,25 +147,76 @@ export const WelcomeScreen = () => {
     if (new URLSearchParams(window.location.search).has("logout")) {
       api.logout();
     }
+    try {
+      setLastName(window.localStorage.getItem(LAST_NAME_KEY));
+    } catch {
+      /* ignore (private mode etc.) */
+    }
   }, []);
 
-  function finish(displayName: string) {
+  const finish = (displayName: string) => {
     setSignedInName(displayName);
+    setEmailSheetOpen(false);
+    try {
+      window.localStorage.setItem(LAST_NAME_KEY, displayName);
+    } catch {
+      /* ignore (private mode etc.) */
+    }
     setTimeout(() => router.push("/"), 650);
-  }
+  };
 
   // Google/Apple are owned by another teammate and still in development.
   // Buttons stay in the UI; for now they show a note instead of signing in.
-  function handleGoogle() {
+  const handleGoogle = () => {
     setError(null);
-    setInfo("Google sign-in is coming soon — use email below for now.");
-  }
-  function handleApple() {
-    setError(null);
-    setInfo("Apple sign-in is coming soon — use email below for now.");
-  }
+    setInfo("Google sign-in is coming soon — use email for now.");
+  };
 
-  async function handleSubmit() {
+  const handleApple = () => {
+    setError(null);
+    setInfo("Apple sign-in is coming soon — use email for now.");
+  };
+
+  const handleOpenEmailSheet = () => {
+    setError(null);
+    setInfo(null);
+    setEmailSheetOpen(true);
+  };
+
+  const handleEmailSheetOpenChange = (open: boolean) => {
+    setEmailSheetOpen(open);
+    if (!open) {
+      setError(null);
+    }
+  };
+
+  const handleEmailSheetInitialFocus = () => {
+    return mode === "register" ? nameInputRef.current : emailInputRef.current;
+  };
+
+  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+  };
+
+  const handleEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+  };
+
+  const handlePasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setPassword(event.target.value);
+  };
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword((current) => !current);
+  };
+
+  const handleToggleMode = () => {
+    setMode(mode === "register" ? "signin" : "register");
+    setError(null);
+    setInfo(null);
+  };
+
+  const handleSubmit = async () => {
     setError(null);
     setInfo(null);
     if (!email.trim() || !password) {
@@ -152,14 +241,14 @@ export const WelcomeScreen = () => {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <MotionConfig reducedMotion="user">
       <main className="flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#F2F2ED]">
         <div className="flex w-full max-w-[430px] flex-col items-center justify-center gap-[26px] px-5 py-8">
           <div className="login-rise">
-            <Notebook ownerName={signedInName} />
+            <Notebook ownerName={signedInName ?? lastName} />
           </div>
 
           {!signedInName && (
@@ -174,56 +263,130 @@ export const WelcomeScreen = () => {
                 <div className="h-px flex-1 bg-[#DDD2C0]" />
               </div>
 
-              {/* Email + password (working now) */}
-              {mode === "register" && (
-                <input
-                  className={inputCls}
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              )}
-              <input
-                className={inputCls}
-                type="email"
-                autoCapitalize="none"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <input
-                className={inputCls}
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              />
-
-              {error && <p className="font-sans text-[13px] text-[#D0392F]">{error}</p>}
-              {info && <p className="font-sans text-[13px] text-[#8A7A69]">{info}</p>}
-
               <AuthButton
-                variant="create"
-                label={loading ? "Please wait…" : mode === "register" ? "Create account" : "Sign in"}
-                onClick={handleSubmit}
-                disabled={loading}
+                variant="email"
+                label="Continue with Email"
+                onClick={handleOpenEmailSheet}
               />
 
-              <button
-                type="button"
-                onClick={() => {
-                  setMode(mode === "register" ? "signin" : "register");
-                  setError(null);
-                  setInfo(null);
-                }}
-                className="font-sans text-[13px] text-[#8A7A69] underline underline-offset-2"
-              >
-                {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
-              </button>
+              {info && <p className="font-sans text-[13px] text-[#8A7A69]">{info}</p>}
             </div>
           )}
         </div>
+
+        <Drawer.Root open={emailSheetOpen} onOpenChange={handleEmailSheetOpenChange}>
+          <Drawer.VirtualKeyboardProvider>
+            <Drawer.Portal>
+              <Drawer.Backdrop
+                className={cn(
+                  "fixed inset-0 z-50 bg-black/40 transition-opacity duration-200",
+                  "[transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
+                  "data-[starting-style]:opacity-0 data-[ending-style]:opacity-0",
+                  "motion-reduce:transition-none",
+                )}
+              />
+              <Drawer.Viewport className="fixed inset-0 z-50 flex items-end justify-center">
+                <Drawer.Popup
+                  initialFocus={handleEmailSheetInitialFocus}
+                  className={cn(
+                    "relative w-full max-w-[430px] rounded-t-[28px] bg-white px-5 pt-3",
+                    "pb-[calc(24px+var(--drawer-keyboard-inset,0px))]",
+                    "shadow-[0_-8px_32px_rgba(74,59,46,0.12)]",
+                    "transition-transform duration-[250ms] will-change-transform",
+                    "[transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
+                    "data-[starting-style]:translate-y-full data-[ending-style]:translate-y-full",
+                    "motion-reduce:transition-none motion-reduce:data-[starting-style]:translate-y-0 motion-reduce:data-[ending-style]:translate-y-0",
+                  )}
+                >
+                  <div
+                    aria-hidden="true"
+                    className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#DDD2C0]"
+                  />
+                  <Drawer.Title className="sr-only">
+                    {mode === "register" ? "Create account with email" : "Sign in with email"}
+                  </Drawer.Title>
+                  <Drawer.Content className="flex flex-col gap-3 pb-2">
+                    {mode === "register" && (
+                      <input
+                        ref={nameInputRef}
+                        className={inputCls}
+                        placeholder="Your name"
+                        autoComplete="name"
+                        value={name}
+                        onChange={handleNameChange}
+                      />
+                    )}
+                    <input
+                      ref={emailInputRef}
+                      className={inputCls}
+                      type="email"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={handleEmailChange}
+                    />
+                    <div className="relative w-full">
+                      <input
+                        className={passwordInputCls}
+                        type={showPassword ? "text" : "password"}
+                        autoComplete={mode === "register" ? "new-password" : "current-password"}
+                        placeholder="Password"
+                        value={password}
+                        onChange={handlePasswordChange}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            void handleSubmit();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleTogglePasswordVisibility}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-pressed={showPassword}
+                        className={cn(
+                          "absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-[#8A7A69] outline-none",
+                          "transition-[color,background-color] duration-200 ease",
+                          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
+                          "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#DDD2C0]/40",
+                          "[@media(hover:hover)_and_(pointer:fine)]:hover:text-[#4A3B2E]",
+                        )}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="size-[18px]" aria-hidden="true" />
+                        ) : (
+                          <Eye className="size-[18px]" aria-hidden="true" />
+                        )}
+                      </button>
+                    </div>
+
+                    {error && <p className="font-sans text-[13px] text-[#D0392F]">{error}</p>}
+
+                    <AuthButton
+                      variant="create"
+                      label={
+                        loading ? "Please wait…" : mode === "register" ? "Create account" : "Sign in"
+                      }
+                      onClick={() => {
+                        void handleSubmit();
+                      }}
+                      disabled={loading}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={handleToggleMode}
+                      className="pb-1 font-sans text-[13px] text-[#8A7A69] underline underline-offset-2"
+                    >
+                      {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
+                    </button>
+                  </Drawer.Content>
+                </Drawer.Popup>
+              </Drawer.Viewport>
+            </Drawer.Portal>
+          </Drawer.VirtualKeyboardProvider>
+        </Drawer.Root>
       </main>
     </MotionConfig>
   );

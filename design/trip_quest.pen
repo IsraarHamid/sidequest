@@ -4677,6 +4677,11 @@
             20,
             8
           ],
+          "stroke": "#ffffff73",
+          "strokeWidth": {
+            "top": 1
+          },
+          "strokeAlignment": "inner",
           "effect": {
             "type": "shadow",
             "shadowType": "outer",
@@ -4689,15 +4694,6 @@
           },
           "layout": "none",
           "children": [
-            {
-              "type": "rectangle",
-              "id": "v7MpVg",
-              "x": 10.5,
-              "y": 0,
-              "fill": "#00000017",
-              "width": 11,
-              "height": 512
-            },
             {
               "type": "frame",
               "id": "l5fXk",
@@ -4807,6 +4803,77 @@
                   "effect": []
                 }
               }
+            },
+            {
+              "type": "rectangle",
+              "id": "qypFG",
+              "x": 265.20453880044806,
+              "y": 275.58156985171445,
+              "rotation": -3.343511358521626,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "Slice%2020.png",
+                "mode": "fill"
+              },
+              "width": 120,
+              "height": 111
+            },
+            {
+              "type": "rectangle",
+              "id": "y4HFH7",
+              "x": 8.821217934952074,
+              "y": -26.02640479964066,
+              "rotation": -5.015267037782438,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "Slice%2016.png",
+                "mode": "fill"
+              },
+              "width": 178,
+              "height": 140
+            },
+            {
+              "type": "rectangle",
+              "id": "v7MpVg",
+              "x": 10.235426287938935,
+              "y": 0.005820984306410537,
+              "name": "shadow",
+              "rotation": 0.05921534401445233,
+              "fill": "#00000017",
+              "width": 11,
+              "height": 512
+            },
+            {
+              "type": "rectangle",
+              "id": "F3sL34",
+              "x": 12.811080648615643,
+              "y": 277.219066007362,
+              "rotation": -1.6717556792608128,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "Slice%2019.png",
+                "mode": "fill"
+              },
+              "width": 113,
+              "height": 106
+            },
+            {
+              "type": "rectangle",
+              "id": "c78kn",
+              "x": 242.1740018317405,
+              "y": 1.7931539311630331,
+              "rotation": -3.343511358521626,
+              "fill": {
+                "type": "image",
+                "enabled": true,
+                "url": "Slice%2010.png",
+                "mode": "fill"
+              },
+              "width": 127,
+              "height": 145
             }
           ]
         },
@@ -4848,39 +4915,29 @@
             },
             {
               "type": "frame",
-              "id": "WNlDB",
+              "id": "Gahoa",
               "name": "Auth Buttons",
               "width": "fill_container",
               "layout": "vertical",
               "gap": 10,
               "children": [
                 {
-                  "type": "frame",
-                  "id": "vSjqO",
-                  "name": "Continue with Google",
+                  "id": "LvtXa",
+                  "type": "ref",
+                  "ref": "jMkdP",
+                  "name": "Create Account",
                   "width": "fill_container",
-                  "height": 48,
-                  "fill": "#FFFFFF",
-                  "cornerRadius": 24,
-                  "stroke": "#747775",
-                  "strokeWidth": 1,
-                  "strokeAlignment": "inner",
-                  "gap": 12,
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "E7UX2",
-                      "name": "Label",
-                      "fill": "#1F1F1F",
-                      "content": "Continue with Google",
-                      "fontFamily": "Roboto",
-                      "fontSize": 15,
-                      "fontWeight": "500",
-                      "letterSpacing": 0.25
+                  "x": 0,
+                  "y": 0,
+                  "descendants": {
+                    "MNPkA": {
+                      "content": "Continue with Google"
+                    },
+                    "i83dU": {
+                      "icon": "sparkles",
+                      "enabled": false
                     }
-                  ]
+                  }
                 }
               ]
             },
@@ -6482,6 +6539,243 @@
     },
     {
       "type": "frame",
+      "id": "v9IpN",
+      "x": 6686,
+      "y": 4703,
+      "name": "02 Trips Dashboard- empty",
+      "clip": true,
+      "width": 390,
+      "height": 955,
+      "fill": "#f2f2edff",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "z1IENm",
+          "name": "Content",
+          "width": "fill_container",
+          "height": 793,
+          "layout": "vertical",
+          "gap": 22,
+          "padding": [
+            16,
+            20,
+            20,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "cb77w",
+              "name": "Frame 7",
+              "width": 350,
+              "gap": 22,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "OBvc6",
+                  "name": "Header",
+                  "width": 73,
+                  "height": 79,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "path",
+                      "id": "B03xCB",
+                      "x": 0,
+                      "y": 0,
+                      "name": "Stamp Border",
+                      "geometry": "M0 0a5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42858 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42858 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875z",
+                      "viewBox": [
+                        0,
+                        0,
+                        73,
+                        79
+                      ],
+                      "fill": "$surface",
+                      "width": 73,
+                      "height": 79,
+                      "stroke": "$border",
+                      "strokeWidth": 1,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$shadow-rest",
+                        "offset": {
+                          "x": 0,
+                          "y": 1
+                        },
+                        "blur": 2
+                      }
+                    },
+                    {
+                      "id": "TeQFo",
+                      "type": "ref",
+                      "ref": "NVl8s",
+                      "name": "Avatar",
+                      "width": 57,
+                      "height": 63,
+                      "cornerRadius": 12,
+                      "flipX": false,
+                      "flipY": false,
+                      "x": 8,
+                      "y": 8,
+                      "descendants": {
+                        "o0OFPo": {
+                          "content": "JZ",
+                          "fontSize": 15
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "NElw7",
+                  "name": "Actions",
+                  "width": "fill_container",
+                  "gap": 12,
+                  "justifyContent": "end",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "id": "yLPSv",
+                      "type": "ref",
+                      "ref": "kUBOR",
+                      "name": "Join Trip",
+                      "width": "fit_content",
+                      "padding": [
+                        14,
+                        16
+                      ],
+                      "descendants": {
+                        "Sf07g": {
+                          "content": "Create",
+                          "fontSize": 14,
+                          "x": 16,
+                          "y": 15.040181041662755,
+                          "rotation": 0.10006169157678804
+                        }
+                      }
+                    },
+                    {
+                      "id": "Hqtmq",
+                      "type": "ref",
+                      "ref": "jMkdP",
+                      "name": "Create Trip",
+                      "width": "fit_content",
+                      "padding": [
+                        14,
+                        16
+                      ],
+                      "descendants": {
+                        "MNPkA": {
+                          "content": "Join",
+                          "fontSize": 14
+                        },
+                        "i83dU": {
+                          "icon": "plus"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "zAQcX",
+              "name": "Frame 6",
+              "width": 350,
+              "height": 541,
+              "layout": "vertical",
+              "gap": 37,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "M27Sce",
+                  "name": "Lisbon, Portugal",
+                  "width": 350,
+                  "height": 268,
+                  "layout": "vertical",
+                  "gap": 13,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "group",
+                      "id": "K8wD5D",
+                      "opacity": 0.4,
+                      "children": [
+                        {
+                          "type": "rectangle",
+                          "id": "LbQUg",
+                          "x": 42.84839295843358,
+                          "y": 6,
+                          "rotation": -8.443856882348337,
+                          "fill": "#CCCCCC",
+                          "width": 164,
+                          "height": 170,
+                          "stroke": "#ffffffff",
+                          "strokeWidth": 9,
+                          "strokeAlignment": "inner"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "z9N1K",
+                          "x": 170.62834815521092,
+                          "y": 0,
+                          "rotation": -4.260106799630951,
+                          "fill": "#CCCCCC",
+                          "width": 164,
+                          "height": 170,
+                          "stroke": "#ffffffff",
+                          "strokeWidth": 9,
+                          "strokeAlignment": "inner"
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "NQqXM",
+                          "x": 45,
+                          "y": 1,
+                          "fill": "#CCCCCC",
+                          "width": 250,
+                          "height": 197,
+                          "stroke": "#ffffffff",
+                          "strokeWidth": 9,
+                          "strokeAlignment": "inner"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "hmsFW",
+                      "layoutPosition": "absolute",
+                      "x": 87,
+                      "y": 95,
+                      "fill": "#4a3b2eff",
+                      "textGrowth": "fixed-width",
+                      "width": 163,
+                      "content": "Create a sidequest",
+                      "textAlign": "center",
+                      "fontFamily": "Gochi Hand",
+                      "fontSize": 36,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
       "id": "wm0iF",
       "x": 7182,
       "y": 4703,
@@ -7414,7 +7708,7 @@
           "id": "o2KfnR",
           "name": "Content",
           "width": 391,
-          "height": "fill_container",
+          "height": 841,
           "layout": "vertical",
           "gap": 22,
           "padding": [
@@ -7619,13 +7913,22 @@
                   "gap": 24,
                   "padding": [
                     0,
-                    35,
-                    0,
-                    21
+                    20
                   ],
                   "justifyContent": "center",
                   "alignItems": "center",
                   "children": [
+                    {
+                      "type": "text",
+                      "id": "xxnr6",
+                      "name": "Label",
+                      "fill": "$ink-muted",
+                      "content": "QUEST TYPES",
+                      "textAlign": "center",
+                      "fontFamily": "$font-mono",
+                      "fontSize": 11,
+                      "letterSpacing": 1
+                    },
                     {
                       "type": "frame",
                       "id": "Ft64o",
@@ -7661,34 +7964,6 @@
                               "fontFamily": "$font-mono",
                               "fontSize": 11,
                               "letterSpacing": 1
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "SiiNZ",
-                          "name": "Frame 16",
-                          "width": 199,
-                          "height": 17,
-                          "layout": "none",
-                          "children": [
-                            {
-                              "type": "rectangle",
-                              "id": "Bh20n",
-                              "x": 0,
-                              "y": 0,
-                              "fill": "#00000080",
-                              "width": "fill_container(199)",
-                              "height": 17
-                            },
-                            {
-                              "type": "rectangle",
-                              "id": "m8zNC",
-                              "x": 0,
-                              "y": 0,
-                              "fill": "#00000080",
-                              "width": "fill_container(85)",
-                              "height": 17
                             }
                           ]
                         }
@@ -8792,14 +9067,20 @@
           "id": "sm9H7",
           "type": "ref",
           "ref": "JGogV",
-          "name": "Status Bar"
+          "name": "Status Bar",
+          "flipX": false,
+          "flipY": false,
+          "width": 390,
+          "height": 44,
+          "x": 0,
+          "y": 0
         },
         {
           "type": "frame",
           "id": "H2s7MA",
           "name": "Content",
           "width": "fill_container",
-          "height": "fill_container",
+          "height": 797,
           "layout": "vertical",
           "gap": 22,
           "padding": [
@@ -16764,365 +17045,6 @@
     },
     {
       "type": "frame",
-      "id": "m5QcD",
-      "x": 2819,
-      "y": 3400,
-      "name": "Individual Stickers",
-      "fill": "#F5F5F0",
-      "layout": "vertical",
-      "gap": 24,
-      "padding": 32,
-      "children": [
-        {
-          "type": "text",
-          "id": "RSq11",
-          "name": "Title",
-          "fill": "#1A1A1A",
-          "content": "Individual Stickers",
-          "fontFamily": "Inter",
-          "fontSize": 24,
-          "fontWeight": "700"
-        },
-        {
-          "type": "frame",
-          "id": "MT6q1",
-          "name": "Row 1",
-          "gap": 20,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "rectangle",
-              "id": "WlV3Q",
-              "name": "suitcase",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/01-suitcase.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 140,
-              "height": 170
-            },
-            {
-              "type": "rectangle",
-              "id": "dKhF6",
-              "name": "map",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/02-map.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 170,
-              "height": 170
-            },
-            {
-              "type": "rectangle",
-              "id": "E6CtSM",
-              "name": "compass",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/03-compass.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 139,
-              "height": 153
-            },
-            {
-              "type": "rectangle",
-              "id": "kg0Z9",
-              "name": "camera-photo",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/04-camera-photo.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 156,
-              "height": 153
-            },
-            {
-              "type": "rectangle",
-              "id": "R7kh1B",
-              "name": "passport",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/05-passport.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 139,
-              "height": 153
-            },
-            {
-              "type": "rectangle",
-              "id": "ObPUM",
-              "name": "tickets",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/06-tickets.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 181,
-              "height": 131
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "r2WO96",
-          "name": "Row 2",
-          "gap": 20,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "rectangle",
-              "id": "c4lda",
-              "name": "signpost",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/07-signpost.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 156,
-              "height": 191
-            },
-            {
-              "type": "rectangle",
-              "id": "wJx0X",
-              "name": "globe",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/08-globe.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 181,
-              "height": 191
-            },
-            {
-              "type": "rectangle",
-              "id": "qoMpK",
-              "name": "camera",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/09-camera.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 144,
-              "height": 86
-            },
-            {
-              "type": "rectangle",
-              "id": "QmQLM",
-              "name": "postcard-photo",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/10-postcard-photo.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 156,
-              "height": 126
-            },
-            {
-              "type": "rectangle",
-              "id": "O5Pi0O",
-              "name": "train",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/11-train.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 186,
-              "height": 127
-            },
-            {
-              "type": "rectangle",
-              "id": "s2Hm7",
-              "name": "museum",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/12-museum.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 170,
-              "height": 126
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "RFei0",
-          "name": "Row 3",
-          "gap": 20,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "rectangle",
-              "id": "Zg4OX",
-              "name": "this-way",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/13-this-way.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 129,
-              "height": 91
-            },
-            {
-              "type": "rectangle",
-              "id": "d28fil",
-              "name": "coffee",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/14-coffee.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 71,
-              "height": 101
-            },
-            {
-              "type": "rectangle",
-              "id": "lxHJM",
-              "name": "binoculars",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/15-binoculars.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 121,
-              "height": 113
-            },
-            {
-              "type": "rectangle",
-              "id": "CV6hx",
-              "name": "note",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/16-note.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 114,
-              "height": 121
-            },
-            {
-              "type": "rectangle",
-              "id": "vTxX9",
-              "name": "mountain",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/17-mountain.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 156,
-              "height": 81
-            },
-            {
-              "type": "rectangle",
-              "id": "xL1Bj",
-              "name": "pin",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/18-pin.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 79,
-              "height": 86
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "J5i9V",
-          "name": "Row 4",
-          "gap": 20,
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "rectangle",
-              "id": "C2zxPb",
-              "name": "plane",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/19-plane.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 131,
-              "height": 86
-            },
-            {
-              "type": "rectangle",
-              "id": "mgPMV",
-              "name": "sunset",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/20-sunset.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 146,
-              "height": 90
-            },
-            {
-              "type": "rectangle",
-              "id": "l31au",
-              "name": "trip-book",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/21-trip-book.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 166,
-              "height": 87
-            },
-            {
-              "type": "rectangle",
-              "id": "TBIjc",
-              "name": "stamp",
-              "fill": {
-                "type": "image",
-                "enabled": true,
-                "url": "stickers/22-stamp.png?r=1789745368081",
-                "mode": "fit"
-              },
-              "width": 126,
-              "height": 86
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "rectangle",
-      "id": "OCHDn",
-      "x": 4377.5,
-      "y": 2492,
-      "fill": {
-        "type": "image",
-        "enabled": true,
-        "url": "image-2.png?r=1789745368081",
-        "mode": "fill"
-      },
-      "width": 159,
-      "height": 159
-    },
-    {
-      "type": "frame",
       "id": "qWZ7C",
       "x": 6260,
       "y": 5782,
@@ -17158,8 +17080,8 @@
     {
       "type": "frame",
       "id": "y2RxZr",
-      "x": 6787,
-      "y": 4703,
+      "x": 6630,
+      "y": 4469,
       "name": "Popup Menu",
       "width": 220,
       "fill": "$surface",
@@ -18707,7 +18629,7 @@
       "type": "rectangle",
       "id": "gYqlf",
       "x": 6560,
-      "y": 6285,
+      "y": 6286.323678493845,
       "fill": {
         "type": "image",
         "enabled": true,
@@ -18715,13 +18637,13 @@
         "mode": "fill"
       },
       "width": 259,
-      "height": 398
+      "height": 397
     },
     {
       "type": "frame",
       "id": "d34Qa1",
       "x": 7030,
-      "y": 6244,
+      "y": 6245.383055756698,
       "name": "Barcode Card",
       "width": 118,
       "height": 47,
@@ -19443,6 +19365,591 @@
           }
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "iOEpr",
+      "x": 4783,
+      "y": 5026,
+      "name": "Frame 21",
+      "clip": true,
+      "width": 324,
+      "height": 497,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "trip_quest-assets/image-11.png",
+        "mode": "fill"
+      },
+      "layout": "none"
+    },
+    {
+      "type": "rectangle",
+      "id": "l168w4",
+      "x": 5703,
+      "y": 7369,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "trip_quest-assets/image-10.png",
+        "mode": "fill"
+      },
+      "width": 792,
+      "height": 528
+    },
+    {
+      "type": "frame",
+      "id": "RUUVd",
+      "x": 6731,
+      "y": 7059,
+      "name": "Unselected",
+      "clip": true,
+      "width": "fill_container(254)",
+      "height": 120,
+      "fill": "#ffffffff",
+      "cornerRadius": 25,
+      "layout": "vertical",
+      "gap": 24,
+      "padding": [
+        0,
+        20
+      ],
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "vzpYC",
+          "name": "Label",
+          "fill": "$ink-muted",
+          "content": "QUEST TYPES",
+          "textAlign": "center",
+          "fontFamily": "$font-mono",
+          "fontSize": 11,
+          "letterSpacing": 1
+        },
+        {
+          "type": "frame",
+          "id": "NrvLl",
+          "name": "Frame 11",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "Iho99",
+              "name": "Frame 15",
+              "width": "fill_container",
+              "gap": 8,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ryhxz",
+                  "name": "Label",
+                  "fill": "$ink-muted",
+                  "content": "SOLO",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 11,
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "text",
+                  "id": "BDIrX",
+                  "name": "Label",
+                  "fill": "$ink-muted",
+                  "content": "TOGETHER",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 11,
+                  "letterSpacing": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "nQAQ0",
+      "x": 6731,
+      "y": 7199,
+      "name": "Selected",
+      "clip": true,
+      "width": "fill_container(254)",
+      "height": 120,
+      "fill": "#ffffffff",
+      "cornerRadius": 25,
+      "layout": "vertical",
+      "gap": 24,
+      "padding": [
+        0,
+        20
+      ],
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "vCiSw",
+          "name": "Label",
+          "fill": "$ink-muted",
+          "content": "QUEST TYPES",
+          "textAlign": "center",
+          "fontFamily": "$font-mono",
+          "fontSize": 11,
+          "letterSpacing": 1
+        },
+        {
+          "type": "frame",
+          "id": "s7sXBN",
+          "name": "Frame 11",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "zeonJ",
+              "name": "Frame 15",
+              "width": "fill_container",
+              "gap": 8,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xnMYt",
+                  "name": "Label",
+                  "fill": "$ink-muted",
+                  "content": "SOLO",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 11,
+                  "letterSpacing": 1
+                },
+                {
+                  "type": "text",
+                  "id": "hzIjV",
+                  "name": "Label",
+                  "fill": "#000000ff",
+                  "content": "TOGETHER",
+                  "fontFamily": "$font-mono",
+                  "fontSize": 19,
+                  "letterSpacing": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "rectangle",
+      "id": "w4o3XP",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%201.png",
+        "mode": "fill"
+      },
+      "width": 226,
+      "height": 198
+    },
+    {
+      "type": "rectangle",
+      "id": "R0Fyi",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%202.png",
+        "mode": "fill"
+      },
+      "width": 191,
+      "height": 221
+    },
+    {
+      "type": "rectangle",
+      "id": "tO7I6",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%203.png",
+        "mode": "fill"
+      },
+      "width": 226,
+      "height": 227
+    },
+    {
+      "type": "rectangle",
+      "id": "D9pJRD",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%204.png",
+        "mode": "fill"
+      },
+      "width": 238,
+      "height": 211
+    },
+    {
+      "type": "rectangle",
+      "id": "xrrM0",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%205.png",
+        "mode": "fill"
+      },
+      "width": 226,
+      "height": 187
+    },
+    {
+      "type": "rectangle",
+      "id": "iiPDM",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%206.png",
+        "mode": "fill"
+      },
+      "width": 202,
+      "height": 212
+    },
+    {
+      "type": "rectangle",
+      "id": "gPyRZ",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%207.png",
+        "mode": "fill"
+      },
+      "width": 198,
+      "height": 193
+    },
+    {
+      "type": "rectangle",
+      "id": "BtSfV",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%208.png",
+        "mode": "fill"
+      },
+      "width": 250,
+      "height": 192
+    },
+    {
+      "type": "rectangle",
+      "id": "wOjfx",
+      "x": 6103,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%209.png",
+        "mode": "fill"
+      },
+      "width": 203,
+      "height": 219
+    },
+    {
+      "type": "rectangle",
+      "id": "v1yXnh",
+      "x": 5668,
+      "y": 6318,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2010.png",
+        "mode": "fill"
+      },
+      "width": 189,
+      "height": 216
+    },
+    {
+      "type": "rectangle",
+      "id": "XeXBD",
+      "x": 5660,
+      "y": 8475,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2011.png",
+        "mode": "fill"
+      },
+      "width": 206,
+      "height": 213
+    },
+    {
+      "type": "rectangle",
+      "id": "mZkd9",
+      "x": 6707,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2012.png",
+        "mode": "fill"
+      },
+      "width": 173,
+      "height": 197
+    },
+    {
+      "type": "rectangle",
+      "id": "gAlwF",
+      "x": 5589,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2013.png",
+        "mode": "fill"
+      },
+      "width": 228,
+      "height": 182
+    },
+    {
+      "type": "rectangle",
+      "id": "LVPuj",
+      "x": 5753,
+      "y": 8063,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2014.png",
+        "mode": "fill"
+      },
+      "width": 226,
+      "height": 176
+    },
+    {
+      "type": "rectangle",
+      "id": "hDmDS",
+      "x": 5773,
+      "y": 8428,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2015.png",
+        "mode": "fill"
+      },
+      "width": 219,
+      "height": 179
+    },
+    {
+      "type": "rectangle",
+      "id": "fwa89",
+      "x": 6413,
+      "y": 8509,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2015.png",
+        "mode": "fill"
+      },
+      "width": 219,
+      "height": 179
+    },
+    {
+      "type": "rectangle",
+      "id": "u6Tedu",
+      "x": 5318,
+      "y": 8114,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2016.png",
+        "mode": "fill"
+      },
+      "width": 229,
+      "height": 179
+    },
+    {
+      "type": "rectangle",
+      "id": "D8smrf",
+      "x": 4975,
+      "y": 6492,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2016.png",
+        "mode": "fill"
+      },
+      "width": 229,
+      "height": 179
+    },
+    {
+      "type": "rectangle",
+      "id": "pmLVc",
+      "x": 5173,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2017.png",
+        "mode": "fill"
+      },
+      "width": 181,
+      "height": 200
+    },
+    {
+      "type": "rectangle",
+      "id": "eN6c0",
+      "x": 6448,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2018.png",
+        "mode": "fill"
+      },
+      "width": 217,
+      "height": 205
+    },
+    {
+      "type": "rectangle",
+      "id": "GveuE",
+      "x": 5293,
+      "y": 6480,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2019.png",
+        "mode": "fill"
+      },
+      "width": 203,
+      "height": 191
+    },
+    {
+      "type": "rectangle",
+      "id": "WeNdo",
+      "x": 5589,
+      "y": 8649,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2020.png",
+        "mode": "fill"
+      },
+      "width": 215,
+      "height": 199
+    },
+    {
+      "type": "rectangle",
+      "id": "SrDMQ",
+      "x": 5264,
+      "y": 6959,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2020.png",
+        "mode": "fill"
+      },
+      "width": 215,
+      "height": 199
+    },
+    {
+      "type": "rectangle",
+      "id": "TAsTT",
+      "x": 5946,
+      "y": 8509,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2021.png",
+        "mode": "fill"
+      },
+      "width": 208,
+      "height": 204
+    },
+    {
+      "type": "rectangle",
+      "id": "XJNlX",
+      "x": 6000,
+      "y": 8597,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2022.png",
+        "mode": "fill"
+      },
+      "width": 228,
+      "height": 181
+    },
+    {
+      "type": "rectangle",
+      "id": "l3Lftd",
+      "x": 5547,
+      "y": 6652,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2023.png",
+        "mode": "fill"
+      },
+      "width": 226,
+      "height": 168
+    },
+    {
+      "type": "rectangle",
+      "id": "jgWSW",
+      "x": 6050,
+      "y": 6579,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2023.png",
+        "mode": "fill"
+      },
+      "width": 226,
+      "height": 168
+    },
+    {
+      "type": "rectangle",
+      "id": "mDeHE",
+      "x": 5395,
+      "y": 8594,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2024.png",
+        "mode": "fill"
+      },
+      "width": 212,
+      "height": 184
+    },
+    {
+      "type": "rectangle",
+      "id": "G3xlU",
+      "x": 4783,
+      "y": 8201,
+      "fill": {
+        "type": "image",
+        "enabled": true,
+        "url": "Slice%2025.png",
+        "mode": "fill"
+      },
+      "width": 203,
+      "height": 180
     }
   ],
   "variables": {

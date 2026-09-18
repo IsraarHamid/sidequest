@@ -7,6 +7,11 @@ import {
   SRGBColorSpace,
   type Texture,
 } from "three";
+import {
+  JOURNAL_COVER_DESIGN,
+  JOURNAL_STICKERS,
+  type JournalSticker,
+} from "@/lib/journal-art";
 
 export const DEFAULT_JOURNAL_COLOR = "#416E51";
 
@@ -31,6 +36,8 @@ const COVER_HEIGHT = 1448;
 const GOCHI_FAMILY = "Gochi Hand";
 
 let gochiFontPromise: Promise<void> | null = null;
+let stickerImagesPromise: Promise<Map<JournalSticker["id"], HTMLImageElement>> | null =
+  null;
 
 const hexToColor = (hex: string) => new Color(hex);
 
@@ -105,6 +112,7 @@ export const loadJournalFonts = async () => {
       document.fonts.add(loaded);
       await Promise.all([
         document.fonts.load(`400 120px "${GOCHI_FAMILY}"`),
+        document.fonts.load(`900 200px ${geistFamily()}`),
         document.fonts.ready,
       ]);
     })().catch(() => {
@@ -113,6 +121,32 @@ export const loadJournalFonts = async () => {
   }
 
   await gochiFontPromise;
+};
+
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Could not load journal sticker ${src}.`));
+    image.src = src;
+  });
+
+const loadJournalStickerImages = async () => {
+  if (!stickerImagesPromise) {
+    stickerImagesPromise = Promise.all(
+      JOURNAL_STICKERS.map(async (sticker) => {
+        const image = await loadImage(sticker.src);
+        return [sticker.id, image] as const;
+      }),
+    )
+      .then((entries) => new Map(entries))
+      .catch((error) => {
+        stickerImagesPromise = null;
+        throw error;
+      });
+  }
+
+  return stickerImagesPromise;
 };
 
 const fitFontSize = (
@@ -132,47 +166,58 @@ const fitFontSize = (
   return size;
 };
 
+const drawSticker = (
+  ctx: CanvasRenderingContext2D,
+  sticker: JournalSticker,
+  image: HTMLImageElement | undefined,
+  scaleX: number,
+  scaleY: number,
+) => {
+  if (!image) return;
+
+  ctx.save();
+  ctx.translate(sticker.x * scaleX, sticker.y * scaleY);
+  ctx.rotate((sticker.rotationDeg * Math.PI) / 180);
+  ctx.drawImage(image, 0, 0, sticker.width * scaleX, sticker.height * scaleY);
+  ctx.restore();
+};
+
 export const paintJournalCover = (
   ctx: CanvasRenderingContext2D,
   coverColor: string,
   ownerName: string,
+  stickerImages: ReadonlyMap<JournalSticker["id"], HTMLImageElement> = new Map(),
 ) => {
   const width = ctx.canvas.width;
   const height = ctx.canvas.height;
+  const scaleX = width / JOURNAL_COVER_DESIGN.width;
+  const scaleY = height / JOURNAL_COVER_DESIGN.height;
   const sans = geistFamily();
   const titleColor = deriveTitleColor(coverColor);
   const name = ownerName.trim() || "Traveller";
+  const titleSize = 70.337 * scaleY;
 
   ctx.clearRect(0, 0, width, height);
 
-  ctx.fillStyle = "rgba(0, 0, 0, 0.16)";
-  ctx.fillRect(36, 0, 22, height);
-  ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
-  ctx.fillRect(58, 0, 3, height);
-
   ctx.fillStyle = titleColor;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const titleSize = fitFontSize(
-    ctx,
-    "SIDE QUEST",
-    (size) => `800 ${size}px ${sans}`,
-    width * 0.78,
-    108,
-    64,
-  );
-  ctx.font = `800 ${titleSize}px ${sans}`;
-  ctx.fillText("SIDE QUEST", width * 0.54, height * 0.695);
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.font = `900 ${titleSize}px ${sans}`;
+  ctx.letterSpacing = `${-2.398 * scaleX}px`;
+  ctx.fillText("SIDE", 73.95 * scaleX, 150.3 * scaleY);
+  ctx.letterSpacing = `${-3.996 * scaleX}px`;
+  ctx.fillText("QUEST", 73.99 * scaleX, 204.65 * scaleY);
+  ctx.letterSpacing = "0px";
 
-  const plateWidth = width * 0.72;
-  const plateHeight = 236;
-  const plateX = (width - plateWidth) * 0.58;
-  const plateY = height * 0.745;
+  const plateWidth = 274 * scaleX;
+  const plateHeight = 94 * scaleY;
+  const plateX = 47.5 * scaleX;
+  const plateY = 391.26 * scaleY;
 
   ctx.shadowColor = "rgba(18, 18, 18, 0.08)";
   ctx.shadowBlur = 12;
   ctx.shadowOffsetY = 4;
-  roundRect(ctx, plateX, plateY, plateWidth, plateHeight, 28);
+  roundRect(ctx, plateX, plateY, plateWidth, plateHeight, 16 * scaleX);
   ctx.fillStyle = "#FBF7F0";
   ctx.fill();
   ctx.shadowColor = "transparent";
@@ -183,38 +228,54 @@ export const paintJournalCover = (
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  const nameMaxWidth = plateWidth - 48;
+  ctx.textAlign = "center";
+  const nameMaxWidth = plateWidth - 32 * scaleX;
   const nameSize = fitFontSize(
     ctx,
     name,
     (size) => `400 ${size}px "${GOCHI_FAMILY}", cursive`,
     nameMaxWidth,
-    118,
-    44,
+    55 * scaleY,
+    28 * scaleY,
   );
   ctx.fillStyle = "#4A3B2E";
   ctx.font = `400 ${nameSize}px "${GOCHI_FAMILY}", cursive`;
   ctx.textBaseline = "alphabetic";
-  ctx.fillText(name, plateX + plateWidth / 2, plateY + 118);
+  ctx.fillText(name, plateX + plateWidth / 2, plateY + 47 * scaleY);
 
-  const ruleY = plateY + 148;
+  const ruleY = plateY + 57 * scaleY;
   ctx.strokeStyle = "#262626";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2 * scaleY;
   ctx.beginPath();
-  ctx.moveTo(plateX + 36, ruleY);
-  ctx.lineTo(plateX + plateWidth - 36, ruleY);
+  ctx.moveTo(plateX + 14.5 * scaleX, ruleY);
+  ctx.lineTo(plateX + plateWidth - 14.5 * scaleX, ruleY);
   ctx.stroke();
 
-  ctx.fillStyle = "#121212";
-  ctx.font = `300 28px ${sans}`;
+  ctx.fillStyle = "#000000";
+  ctx.font = `300 ${16 * scaleY}px ${sans}`;
+  ctx.letterSpacing = `${-0.5 * scaleX}px`;
   ctx.textBaseline = "middle";
-  ctx.fillText("This book belongs to", plateX + plateWidth / 2, plateY + 188);
+  ctx.fillText("This book belongs to", plateX + plateWidth / 2, plateY + 76 * scaleY);
+  ctx.letterSpacing = "0px";
+
+  for (const sticker of JOURNAL_STICKERS) {
+    if (sticker.layer !== 1) continue;
+    drawSticker(ctx, sticker, stickerImages.get(sticker.id), scaleX, scaleY);
+  }
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.09)";
+  ctx.fillRect(10.24 * scaleX, 0, 11 * scaleX, height);
+
+  for (const sticker of JOURNAL_STICKERS) {
+    if (sticker.layer !== 3) continue;
+    drawSticker(ctx, sticker, stickerImages.get(sticker.id), scaleX, scaleY);
+  }
 };
 
-export const createJournalCoverTexture = (
+export const createJournalCoverTexture = async (
   coverColor: string,
   ownerName: string,
-): Texture => {
+): Promise<Texture> => {
   const canvas = document.createElement("canvas");
   canvas.width = COVER_WIDTH;
   canvas.height = COVER_HEIGHT;
@@ -223,7 +284,10 @@ export const createJournalCoverTexture = (
     throw new Error("Could not create a 2D canvas for the journal cover.");
   }
 
-  paintJournalCover(ctx, coverColor, ownerName);
+  const stickerImages = await loadJournalStickerImages().catch(
+    () => new Map<JournalSticker["id"], HTMLImageElement>(),
+  );
+  paintJournalCover(ctx, coverColor, ownerName, stickerImages);
 
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
