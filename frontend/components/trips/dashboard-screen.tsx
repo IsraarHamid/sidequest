@@ -1,28 +1,50 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { cn } from "cn";
-import { CREW, DEFAULT_TRIP_ID, getTrip } from "@/lib/trip-quest-data";
+import { api, type Trip, type User } from "@/lib/api";
 import { PhotoStack } from "@/components/trips/photo-stack";
 import { StampAvatar } from "@/components/trips/stamp-avatar";
-
-type Album = {
-  id: string;
-  monthLabel: string;
-  tripId: string;
-  layout: "loose" | "compact";
-};
-
-const ALBUMS: Album[] = [
-  { id: "march-a", monthLabel: "March 2025", tripId: "lisbon-legends", layout: "loose" },
-  { id: "march-b", monthLabel: "March 2025", tripId: "lisbon-legends", layout: "compact" },
-  { id: "april", monthLabel: "April 2025", tripId: "lisbon-legends", layout: "compact" },
-];
 
 const actionClassName =
   "box-border flex h-12 w-fit shrink-0 flex-row items-center justify-center gap-2 rounded-full px-4 py-[14px] transition-transform duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212] active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100";
 
 export const TripsDashboard = () => {
-  const owner = CREW.find((member) => member.id === "jackie") ?? CREW[0];
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await api.me(); // 401 if not signed in
+        if (cancelled) return;
+        setUser(me);
+        setTrips(await api.myTrips());
+      } catch {
+        if (!cancelled) router.replace("/login");
+        return;
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  if (loading || !user) {
+    return (
+      <main className="flex min-h-svh w-full items-center justify-center bg-[#F2F2ED]">
+        <p className="font-sans text-[15px] text-[#8A7A69]">Loading…</p>
+      </main>
+    );
+  }
 
   return (
     <main className="flex min-h-svh w-full flex-col overflow-x-hidden bg-[#F2F2ED]">
@@ -30,11 +52,11 @@ export const TripsDashboard = () => {
         <div className="box-border flex w-full shrink-0 flex-col items-start justify-start gap-[22px] p-[16px_20px_20px_20px]">
           <div className="box-border flex w-full shrink-0 flex-row items-center justify-between gap-[22px]">
             <StampAvatar
-              initials={owner.initials}
-              color={owner.color}
-              label={`Open ${owner.name}'s menu`}
-              profileHref={`/trips/${DEFAULT_TRIP_ID}/passport`}
-              preferencesHref={`/trips/${DEFAULT_TRIP_ID}/preferences`}
+              initials={user.initials ?? "SQ"}
+              color={user.avatar_color ?? "#3E6B4A"}
+              label={`Open ${user.display_name}'s menu`}
+              profileHref="/login"
+              preferencesHref="/login"
               logoutHref="/login"
             />
 
@@ -73,20 +95,43 @@ export const TripsDashboard = () => {
             </div>
           </div>
 
-          <div className="box-border flex w-full shrink-0 flex-col items-start justify-start gap-[37px]">
-            {ALBUMS.map((album) => {
-              const trip = getTrip(album.tripId);
-              return (
-                <PhotoStack
-                  key={album.id}
-                  monthLabel={album.monthLabel}
-                  destination={trip.destination}
-                  href={`/trips/${trip.id}/missions`}
-                  layout={album.layout}
-                />
-              );
-            })}
+          <div className="box-border flex w-full shrink-0 flex-col items-start justify-start gap-1">
+            <p className="font-sans text-[13px] font-medium tracking-[1px] text-[#8A7A69] uppercase">
+              Welcome{user.display_name ? `, ${user.display_name}` : ""}
+            </p>
+            <h1 className="font-sans text-[22px] font-extrabold text-[#4A3B2E]">
+              Your trips
+            </h1>
           </div>
+
+          {trips.length === 0 ? (
+            <div className="box-border flex w-full flex-col items-center gap-3 rounded-3xl border border-[#DDD2C0] bg-[#FBF7F0] px-6 py-10 text-center">
+              <p className="font-sans text-[16px] font-semibold text-[#4A3B2E]">
+                No trips yet
+              </p>
+              <p className="font-sans text-[14px] text-[#8A7A69]">
+                Create a trip and share the code, or join a friend&apos;s trip to start playing.
+              </p>
+              <Link
+                href="/trips/new"
+                className="mt-1 flex h-11 items-center justify-center rounded-full bg-[#121212] px-6 font-sans text-[14px] font-semibold text-[#FBF7F0]"
+              >
+                Create your first trip
+              </Link>
+            </div>
+          ) : (
+            <div className="box-border flex w-full shrink-0 flex-col items-start justify-start gap-[37px]">
+              {trips.map((trip) => (
+                <PhotoStack
+                  key={trip.id}
+                  monthLabel={trip.start_date ?? trip.status}
+                  destination={trip.destination ?? trip.name}
+                  href={`/trips/${trip.id}/missions`}
+                  layout="loose"
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </main>

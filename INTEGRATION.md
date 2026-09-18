@@ -82,11 +82,23 @@ Types mirror `backend/app/models.py`. Migrating a screen = replacing its
   `api.joinTrip(code)` → shows the real trip + members → Continue.
 - No schema change — uses the existing `trips.join_code` + `trip_members`.
 
+## Auth flow (wired)
+
+- **Welcome first:** the dashboard (`/`) checks `api.me()`; if not signed in it
+  redirects to `/login`.
+- **`/login`** offers **Google sign-in** (currently 501 → shows "in development"),
+  **email/password** sign-in, and **register**. Landing here clears any session
+  (so it doubles as "log out").
+- **Admin override:** `betterbash@gmail.com` / `betterbash` (seeded, `is_admin`)
+  — the bypass while Google is in development.
+- Dashboard shows the **real** signed-in user + their trips (`GET /trips`), with an
+  empty state for new users. No more sample "Jackie" data.
+
 ## Status / next steps
 
 - ✅ Backend API + both generation paths working (validated live).
-- ✅ Frontend UI complete + typed API client + maps links + env.
-- ✅ **Create + Join screens wired to the API** (real shareable code).
+- ✅ Auth: anonymous, email/password (+ admin override), Google stub; `is_admin`.
+- ✅ **Welcome-first flow + real dashboard** (create/join already wired).
 - ⏳ Wire remaining screens (preferences, missions, leaderboard, passport) to `lib/api.ts`.
+- ⏳ Real Google OAuth (replace the 501 stub).
 - ⏳ Swap the in-memory store for Supabase (schema in `DATABASE.md`).
-- ⏳ Decide how much of the rich plan the UI renders vs. the simple missions.

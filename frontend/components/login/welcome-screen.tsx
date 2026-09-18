@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { cn } from "cn";
-
-type AuthVariant = "create" | "google" | "apple";
-
-const OWNER_NAME = "Jackie";
+import { api } from "@/lib/api";
 
 const springTransition = {
   type: "spring" as const,
@@ -16,59 +13,18 @@ const springTransition = {
   mass: 0.85,
 };
 
-const AuthButton = ({
-  label,
-  variant,
-  onClick,
-}: {
-  label: string;
-  variant: AuthVariant;
-  onClick: () => void;
-}) => {
-  const handleClick = () => {
-    onClick();
-  };
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={handleClick}
-      className={cn(
-        "flex h-12 w-full items-center justify-center rounded-full font-sans font-semibold outline-none",
-        "transition-[transform,box-shadow] duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
-        "active:scale-[0.97]",
-        "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
-        variant === "create" && "bg-[#121212] px-8 text-[15px] text-[#FBF7F0]",
-        variant === "google" &&
-          "border border-[#747775] bg-white px-8 text-[15px] font-medium tracking-[0.25px] text-[#1F1F1F]",
-        variant === "apple" && "bg-black px-8 text-[16px] text-white",
-      )}
-    >
-      {label}
-    </button>
-  );
-};
-
 const Notebook = ({ ownerName }: { ownerName: string | null }) => (
   <div className="relative w-[354px] max-w-full">
     <div
       aria-hidden="true"
       className="absolute -top-5 left-3 -z-10 h-[500px] w-[320px] rotate-[-1.34deg] bg-[#CCCCCC] motion-reduce:rotate-0"
     />
-
     <div className="relative z-10 h-[512px] w-full overflow-hidden rounded-[8px_20px_20px_8px] bg-[#416E51] shadow-[0_4px_4px_#00000040] rotate-[1.67deg] motion-reduce:rotate-0">
-      <div
-        aria-hidden="true"
-        className="absolute inset-y-0 left-[10px] w-[11px] bg-black/[0.09]"
-      />
-
+      <div aria-hidden="true" className="absolute inset-y-0 left-[10px] w-[11px] bg-black/[0.09]" />
       <div className="relative flex h-full flex-col justify-end gap-3 px-10 pb-[27px]">
         <p className="text-center font-sans text-[44px] leading-[1.05] font-extrabold tracking-[-0.5px] text-[#21C45D]">
           SIDE QUEST
         </p>
-
         <div className="flex h-[94px] w-full flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#DDD2C0] bg-[#FBF7F0] px-4">
           <p
             aria-live="polite"
@@ -99,59 +55,154 @@ const Notebook = ({ ownerName }: { ownerName: string | null }) => (
   </div>
 );
 
+const btnBase =
+  "flex h-12 w-full items-center justify-center rounded-full font-sans font-semibold outline-none transition-[transform,box-shadow] duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212] active:scale-[0.97] disabled:opacity-60";
+
+const inputCls =
+  "h-12 w-full rounded-2xl border border-[#DDD2C0] bg-[#FBF7F0] px-4 font-sans text-[15px] text-[#4A3B2E] outline-none placeholder:text-[#B7AA97] focus:border-[#4A3B2E]";
+
 export const WelcomeScreen = () => {
   const router = useRouter();
-  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [mode, setMode] = useState<"signin" | "register">("signin");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [signedInName, setSignedInName] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
-  const handleSignIn = () => {
-    setIsSignedIn(true);
-  };
+  // Landing on the welcome screen clears any existing session (this is also the
+  // "log out" destination), so you always start signed out here.
+  useEffect(() => {
+    api.logout();
+  }, []);
 
-  const handleContinue = () => {
-    router.push("/");
-  };
+  async function finish(displayName: string) {
+    setSignedInName(displayName);
+    setTimeout(() => router.push("/"), 650);
+  }
 
-  const handleNotebookKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      handleContinue();
+  async function handleGoogle() {
+    setError(null);
+    setInfo(null);
+    setLoading(true);
+    try {
+      const user = await api.googleSignIn(); // currently 501
+      await finish(user.display_name);
+    } catch {
+      setInfo("Google sign-in is still in development — use email below (admin override available).");
+    } finally {
+      setLoading(false);
     }
-  };
+  }
+
+  async function handleSubmit() {
+    setError(null);
+    setInfo(null);
+    if (!email.trim() || !password) {
+      setError("Enter your email and password.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const user =
+        mode === "register"
+          ? await api.register(name.trim() || "Traveller", email.trim(), password)
+          : await api.login(email.trim(), password);
+      await finish(user.display_name);
+    } catch (e) {
+      setError(
+        e instanceof Error && /409/.test(e.message)
+          ? "That email is already registered — sign in instead."
+          : mode === "register"
+            ? "Could not create the account."
+            : "Invalid email or password.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <MotionConfig reducedMotion="user">
       <main className="flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#F2F2ED]">
-        <div className="flex w-full max-w-[430px] flex-col items-center justify-center gap-[30px] px-5 py-8">
-          <div
-            className="login-rise"
-            role={isSignedIn ? "button" : undefined}
-            tabIndex={isSignedIn ? 0 : undefined}
-            aria-label={isSignedIn ? `Continue as ${OWNER_NAME}` : undefined}
-            onClick={isSignedIn ? handleContinue : undefined}
-            onKeyDown={isSignedIn ? handleNotebookKeyDown : undefined}
-          >
-            <Notebook ownerName={isSignedIn ? OWNER_NAME : null} />
+        <div className="flex w-full max-w-[430px] flex-col items-center justify-center gap-[26px] px-5 py-8">
+          <div className="login-rise">
+            <Notebook ownerName={signedInName} />
           </div>
 
-          {!isSignedIn ? (
-            <div className="flex w-[296px] max-w-full flex-col gap-4">
-              <AuthButton
-                variant="create"
-                label="Create account"
-                onClick={handleSignIn}
+          {!signedInName && (
+            <div className="flex w-[300px] max-w-full flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleGoogle}
+                disabled={loading}
+                className={cn(btnBase, "border border-[#747775] bg-white px-8 text-[15px] font-medium tracking-[0.25px] text-[#1F1F1F]")}
+              >
+                Continue with Google
+              </button>
+
+              <div className="flex items-center gap-3 py-1">
+                <div className="h-px flex-1 bg-[#DDD2C0]" />
+                <span className="font-sans text-[12px] text-[#8A7A69]">or</span>
+                <div className="h-px flex-1 bg-[#DDD2C0]" />
+              </div>
+
+              {mode === "register" && (
+                <input
+                  className={inputCls}
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              )}
+              <input
+                className={inputCls}
+                type="email"
+                autoCapitalize="none"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
-              <AuthButton
-                variant="google"
-                label="Continue with Google"
-                onClick={handleSignIn}
+              <input
+                className={inputCls}
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               />
-              <AuthButton
-                variant="apple"
-                label="Continue with Apple"
-                onClick={handleSignIn}
-              />
+
+              {error && <p className="font-sans text-[13px] text-[#D0392F]">{error}</p>}
+              {info && <p className="font-sans text-[13px] text-[#8A7A69]">{info}</p>}
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className={cn(btnBase, "bg-[#121212] px-8 text-[15px] text-[#FBF7F0]")}
+              >
+                {loading ? "Please wait…" : mode === "register" ? "Create account" : "Sign in"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === "register" ? "signin" : "register");
+                  setError(null);
+                  setInfo(null);
+                }}
+                className="font-sans text-[13px] text-[#8A7A69] underline underline-offset-2"
+              >
+                {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
+              </button>
+
+              <p className="mt-1 text-center font-sans text-[11px] leading-[16px] text-[#B7AA97]">
+                Admin override (Google in dev): betterbash@gmail.com / betterbash
+              </p>
             </div>
-          ) : null}
+          )}
         </div>
       </main>
     </MotionConfig>
