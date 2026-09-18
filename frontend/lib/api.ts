@@ -191,4 +191,20 @@ export const api = {
   getPlan: (tripId: string) => request<MissionPlan>(`/trips/${tripId}/plan`),
 };
 
+/** Ensure there is an anonymous user session; returns the user id.
+ *  Frictionless: if none exists yet, creates one with the given name. */
+export async function ensureUser(displayName = "Traveller"): Promise<string> {
+  const existing = getUserId();
+  if (existing) return existing;
+  const user = await api.signInAnon(displayName);
+  return user.id;
+}
+
+/** Build a shareable join link for a trip code (client-side). */
+export function joinLink(code: string): string {
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/trips/join?code=${encodeURIComponent(code)}`;
+}
+
 export { getUserId };

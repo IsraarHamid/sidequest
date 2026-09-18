@@ -26,6 +26,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
+    # Allow any localhost port in dev (Next.js may fall back to 3001+ if 3000
+    # is taken, e.g. by Docker). Explicit prod origins still go in cors_origins.
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
