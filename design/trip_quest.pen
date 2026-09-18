@@ -7413,7 +7413,7 @@
           "type": "frame",
           "id": "o2KfnR",
           "name": "Content",
-          "width": "fill_container",
+          "width": 391,
           "height": "fill_container",
           "layout": "vertical",
           "gap": 22,
