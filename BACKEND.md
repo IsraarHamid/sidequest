@@ -165,12 +165,12 @@ Not exhaustive — a shared starting point. All return JSON; auth via `Authoriza
 **Missions**
 - `GET /trips/{id}/missions` — missions visible to current user (secret ones filtered to owner)
 - `POST /missions/{id}/photo` — upload an image (multipart) to Supabase Storage → returns `{photo_url}`
-- `POST /missions/{id}/complete` — mark complete (+ optional `photo_url`) → awards points, sets `is_first`
-- `POST /missions/{id}/rankings` — a friend ranks a completion
+- `POST /missions/{id}/complete` — mark complete (+ optional `photo_url`) → awards points, sets `is_first`, **auto-awards badges**
+- `POST /missions/{id}/rankings` — vote a completion in a category (funniest/best_photo/…); `GET` returns aggregated counts
 
 **Leaderboard / passport**
 - `GET /trips/{id}/leaderboard` — points per member (real-time subscribe via Supabase)
-- `GET /users/me/passport` — badges earned
+- `GET /users/me/passport` — badges earned + `missions_completed` (badge catalog in `app/badges.py`, seeded on startup)
 
 **Later:** `GET /feed`, `POST /trips/{id}/discover`, business endpoints.
 

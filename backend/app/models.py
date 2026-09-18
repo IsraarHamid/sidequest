@@ -110,6 +110,10 @@ class CompleteIn(BaseModel):
     photo_url: Optional[str] = None
 
 
+class RankingIn(BaseModel):
+    category: str    # e.g. funniest | best_photo | most_creative
+
+
 class CompletionOut(BaseModel):
     id: str
     mission_id: str
