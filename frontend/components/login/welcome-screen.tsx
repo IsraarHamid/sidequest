@@ -6,12 +6,46 @@ import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { cn } from "cn";
 import { api } from "@/lib/api";
 
+type AuthVariant = "create" | "google" | "apple";
+
 const springTransition = {
   type: "spring" as const,
   stiffness: 420,
   damping: 34,
   mass: 0.85,
 };
+
+const AuthButton = ({
+  label,
+  variant,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  variant: AuthVariant;
+  onClick: () => void;
+  disabled?: boolean;
+}) => (
+  <button
+    type="button"
+    aria-label={label}
+    onClick={onClick}
+    disabled={disabled}
+    className={cn(
+      "flex h-12 w-full items-center justify-center rounded-full font-sans font-semibold outline-none",
+      "transition-[transform,box-shadow] duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
+      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
+      "active:scale-[0.97] disabled:opacity-60",
+      "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
+      variant === "create" && "bg-[#121212] px-8 text-[15px] text-[#FBF7F0]",
+      variant === "google" &&
+        "border border-[#747775] bg-white px-8 text-[15px] font-medium tracking-[0.25px] text-[#1F1F1F]",
+      variant === "apple" && "bg-black px-8 text-[16px] text-white",
+    )}
+  >
+    {label}
+  </button>
+);
 
 const Notebook = ({ ownerName }: { ownerName: string | null }) => (
   <div className="relative w-[354px] max-w-full">
@@ -55,9 +89,6 @@ const Notebook = ({ ownerName }: { ownerName: string | null }) => (
   </div>
 );
 
-const btnBase =
-  "flex h-12 w-full items-center justify-center rounded-full font-sans font-semibold outline-none transition-[transform,box-shadow] duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212] active:scale-[0.97] disabled:opacity-60";
-
 const inputCls =
   "h-12 w-full rounded-2xl border border-[#DDD2C0] bg-[#FBF7F0] px-4 font-sans text-[15px] text-[#4A3B2E] outline-none placeholder:text-[#B7AA97] focus:border-[#4A3B2E]";
 
@@ -72,29 +103,25 @@ export const WelcomeScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
-  // Landing on the welcome screen clears any existing session (this is also the
-  // "log out" destination), so you always start signed out here.
+  // Landing here clears any session (this is also the "log out" destination).
   useEffect(() => {
     api.logout();
   }, []);
 
-  async function finish(displayName: string) {
+  function finish(displayName: string) {
     setSignedInName(displayName);
     setTimeout(() => router.push("/"), 650);
   }
 
-  async function handleGoogle() {
+  // Google/Apple are owned by another teammate and still in development.
+  // Buttons stay in the UI; for now they show a note instead of signing in.
+  function handleGoogle() {
     setError(null);
-    setInfo(null);
-    setLoading(true);
-    try {
-      const user = await api.googleSignIn(); // currently 501
-      await finish(user.display_name);
-    } catch {
-      setInfo("Google sign-in is still in development — use email below (admin override available).");
-    } finally {
-      setLoading(false);
-    }
+    setInfo("Google sign-in is coming soon — use email below (admin override available).");
+  }
+  function handleApple() {
+    setError(null);
+    setInfo("Apple sign-in is coming soon — use email below (admin override available).");
   }
 
   async function handleSubmit() {
@@ -110,7 +137,7 @@ export const WelcomeScreen = () => {
         mode === "register"
           ? await api.register(name.trim() || "Traveller", email.trim(), password)
           : await api.login(email.trim(), password);
-      await finish(user.display_name);
+      finish(user.display_name);
     } catch (e) {
       setError(
         e instanceof Error && /409/.test(e.message)
@@ -134,14 +161,9 @@ export const WelcomeScreen = () => {
 
           {!signedInName && (
             <div className="flex w-[300px] max-w-full flex-col gap-3">
-              <button
-                type="button"
-                onClick={handleGoogle}
-                disabled={loading}
-                className={cn(btnBase, "border border-[#747775] bg-white px-8 text-[15px] font-medium tracking-[0.25px] text-[#1F1F1F]")}
-              >
-                Continue with Google
-              </button>
+              {/* Third-party sign-in (in development — kept for the teammate to wire) */}
+              <AuthButton variant="google" label="Continue with Google" onClick={handleGoogle} />
+              <AuthButton variant="apple" label="Continue with Apple" onClick={handleApple} />
 
               <div className="flex items-center gap-3 py-1">
                 <div className="h-px flex-1 bg-[#DDD2C0]" />
@@ -149,6 +171,7 @@ export const WelcomeScreen = () => {
                 <div className="h-px flex-1 bg-[#DDD2C0]" />
               </div>
 
+              {/* Email + password (working now) */}
               {mode === "register" && (
                 <input
                   className={inputCls}
@@ -177,14 +200,12 @@ export const WelcomeScreen = () => {
               {error && <p className="font-sans text-[13px] text-[#D0392F]">{error}</p>}
               {info && <p className="font-sans text-[13px] text-[#8A7A69]">{info}</p>}
 
-              <button
-                type="button"
+              <AuthButton
+                variant="create"
+                label={loading ? "Please wait…" : mode === "register" ? "Create account" : "Sign in"}
                 onClick={handleSubmit}
                 disabled={loading}
-                className={cn(btnBase, "bg-[#121212] px-8 text-[15px] text-[#FBF7F0]")}
-              >
-                {loading ? "Please wait…" : mode === "register" ? "Create account" : "Sign in"}
-              </button>
+              />
 
               <button
                 type="button"
@@ -199,7 +220,7 @@ export const WelcomeScreen = () => {
               </button>
 
               <p className="mt-1 text-center font-sans text-[11px] leading-[16px] text-[#B7AA97]">
-                Admin override (Google in dev): betterbash@gmail.com / betterbash
+                Admin override (Google/Apple in dev): betterbash@gmail.com / betterbash
               </p>
             </div>
           )}
