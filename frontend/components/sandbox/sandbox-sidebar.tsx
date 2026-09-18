@@ -2,6 +2,7 @@
 
 import type { KeyboardEvent } from "react";
 import {
+  BookMarked,
   BookOpen,
   Compass,
   Heart,
@@ -26,6 +27,7 @@ import {
 const SCREEN_ICONS: Record<string, LucideIcon> = {
   login: LogIn,
   onboarding: Sparkles,
+  journal: BookMarked,
   home: Map,
   "new-trip": Plus,
   "join-trip": UserPlus,

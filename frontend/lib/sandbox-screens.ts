@@ -43,6 +43,12 @@ export const SANDBOX_SCREEN_GROUPS: SandboxScreenGroup[] = [
     label: "Trips",
     screens: [
       {
+        id: "journal",
+        label: "Travel journal",
+        href: "/journal",
+        match: (pathname) => pathname === "/journal",
+      },
+      {
         id: "home",
         label: "Your trips",
         href: "/",
