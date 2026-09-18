@@ -89,6 +89,7 @@ erDiagram
         date end_date
         timestamptz start_time
         timestamptz ends_at
+        jsonb plan
         timestamptz created_at
     }
     trip_members {
@@ -153,6 +154,9 @@ erDiagram
         text category
         text[] tags
         bool is_promoted
+        numeric rating
+        float lat
+        float lng
         timestamptz created_at
     }
     feed_posts {
@@ -270,6 +274,7 @@ create table trips (
     end_date     date,
     start_time   timestamptz,
     ends_at      timestamptz,   -- optional overall trip countdown (design: countdown timer)
+    plan         jsonb,         -- rich mission plan (mission_generator.md via the LLM)
     created_at   timestamptz not null default now()
 );
 create index on trips (join_code);
@@ -325,6 +330,9 @@ create table businesses (
     category     text,
     tags         text[] not null default '{}',
     is_promoted  boolean not null default false,  -- monetization hook
+    rating       numeric,                         -- from the LLM/maps data
+    lat          double precision,
+    lng          double precision,
     created_at   timestamptz not null default now()
 );
 
