@@ -22,7 +22,10 @@ class Settings(BaseSettings):
     claude_model: str = "claude-sonnet-5"
 
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.5-flash"
+    # Live Google Maps grounding needs a billing-enabled Gemini project.
+    # Leave False for the free tier (uses Gemini's own knowledge for real places).
+    gemini_use_maps_grounding: bool = False
 
     @property
     def cors_origin_list(self) -> list[str]:

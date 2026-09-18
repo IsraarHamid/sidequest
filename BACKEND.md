@@ -64,7 +64,7 @@
 | Real-time | **Supabase Realtime** | Firebase, WebSockets, polling | For live leaderboard/mission status |
 | File/photo storage | **Supabase Storage** ✅ *confirmed* | Cloudinary (free tier — only if heavy image transforms needed), Firebase Storage | Mission checkpoint photos — see storage note below |
 | AI / mission engine | **Claude `claude-sonnet-5`** (Anthropic API) | — | Creative mission writing. Server-side only (§8) |
-| Real-place discovery | **Gemini + Google Maps grounding** (`services/places.py`) | OpenStreetMap Overpass (free, no ratings) | Optional. Real businesses along the route → mission checkpoints. Free tier ample for demo. `[]` if `GEMINI_API_KEY` unset. |
+| Real-place discovery | **Gemini** (`services/places.py`) — plain mode (free) by default; Google Maps grounding opt-in (needs billing) | OpenStreetMap Overpass (free, no ratings) | Optional. Real businesses along the route → mission checkpoints. `[]` if `GEMINI_API_KEY` unset. |
 | Hosting (API) | **Render / Railway free tier** or **Fly.io** | Any container host | FastAPI needs a Python host (not Vercel-static) |
 | Env / secrets | **`.env` + host env vars** | — | Never commit secrets |
 | Package mgmt | **`pip` + `requirements.txt`** | `uv`, Poetry | Keep simple for 24h |
@@ -227,10 +227,15 @@ rating/coords). These are:
    with `business_name` (copied verbatim from a provided place); the start endpoint
    resolves that to `business_id`.
 
-This powers the **small-business-checkpoint** feature and eliminates hallucinated
-places. Fully optional and defensive: no `GEMINI_API_KEY`, SDK missing, or any
-error → returns `[]`, and missions generate normally without real places.
-Free tier is ample for the demo (Maps grounding ~5000 free prompts/month).
+This powers the **small-business-checkpoint** feature. Fully optional and
+defensive: no `GEMINI_API_KEY`, SDK missing, or any error → returns `[]`, and
+missions generate normally without real places.
+
+**Modes:** default is **plain (free)** — Gemini lists real, well-known places from
+its own knowledge (validated: returns real SA route stops on the free tier). Live
+**Google Maps grounding** (ratings/coords) is **opt-in and needs billing** (the
+free tier 429s for grounding) — set `GEMINI_USE_MAPS_GROUNDING=true` once billing
+is on; we then try grounding first and fall back to plain automatically.
 **Privacy note:** on Gemini's *free* tier, inputs/outputs may be used to improve
 Google's models — fine for the demo; send nothing sensitive.
 
@@ -260,11 +265,18 @@ SUPABASE_SERVICE_ROLE_KEY=   # server-side only, never expose
 ANTHROPIC_API_KEY=
 CLAUDE_MODEL=claude-sonnet-5
 
-# Gemini (real-place discovery via Google Maps grounding — optional)
+# Gemini (real-place discovery — optional)
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.5-flash
+GEMINI_USE_MAPS_GROUNDING=false   # true only with a billing-enabled project
 ```
 **Never commit real values.** Commit only `.env.example`.
+
+> **Gemini free-tier note (validated 2026-09-18):** the API key + plain generation
+> work on the free tier (Gemini 3.x Flash ≈ 20 req/day/model). **Live Google Maps
+> grounding is NOT free — it 429s without billing enabled.** So `places.py` defaults
+> to Gemini's own knowledge (still returns real, well-known places, free). Flip
+> `GEMINI_USE_MAPS_GROUNDING=true` after enabling billing to use live Maps data.
 
 ---
 
