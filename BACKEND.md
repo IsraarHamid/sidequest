@@ -196,7 +196,8 @@ Lives in `services/ai.py`. **Server-side only** (Claude key never reaches the cl
       "type": "secret",
       "is_secret": true,
       "rarity": "rare",
-      "points": 250
+      "points": 250,
+      "time_limit_minutes": 20
     }
   ]
 }
@@ -208,6 +209,10 @@ Lives in `services/ai.py`. **Server-side only** (Claude key never reaches the cl
 - Secret missions are **social** and playful (target another named player).
 - Keep them **safe, legal, doable in-journey, and funny** — the humour is the wow factor.
 - Points scale with rarity (`common ~100`, `rare ~250`, `legendary ~500`).
+- **Timers are optional and rare:** most missions omit `time_limit_minutes` (or set it
+  `null`) and never expire; only ~1 in 4 get a limit for urgency. The engine converts
+  `time_limit_minutes` → an absolute `expires_at` at generation time. Completing an
+  expired mission is rejected (`409`); the missions list exposes a computed `is_expired`.
 
 **Fallback:** `data/fallback_missions.py` holds a generic-but-fun deck. If the AI call fails or returns invalid JSON twice, serve the fallback so the demo never breaks.
 

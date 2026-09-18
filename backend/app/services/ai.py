@@ -9,6 +9,7 @@ The output shape is the contract in BACKEND.md §8. Missions returned here map
 directly to store.save_missions().
 """
 import json
+from datetime import datetime, timedelta, timezone
 
 from app.config import get_settings
 from app.data.fallback_missions import RARITY_POINTS, build_fallback_missions
@@ -22,6 +23,9 @@ Rules:
   social mission per player that playfully targets ANOTHER named player.
 - Missions must be SAFE, LEGAL, doable in-journey, and FUNNY. Humour is the point.
 - Points scale with rarity: common~100, rare~250, legendary~500.
+- MOST missions have NO time limit (omit time_limit_minutes / set it null). Give a
+  time limit to only a FEW missions (roughly 1 in 4) where urgency adds fun — a
+  "quick! do it now" challenge. Timed missions can be worth a bit more.
 - Return ONLY valid JSON. No prose, no markdown fences.
 
 Return this exact JSON shape:
@@ -34,7 +38,8 @@ Return this exact JSON shape:
       "type": "solo" | "group" | "secret",
       "rarity": "common" | "rare" | "legendary",
       "points": <int>,
-      "is_secret": <bool>
+      "is_secret": <bool>,
+      "time_limit_minutes": <int or null — null for most missions>
     }
   ]
 }"""
@@ -71,11 +76,25 @@ def _parse_and_map(raw_text: str, players: list[dict]) -> list[dict]:
             "rarity": rarity,
             "points": int(m.get("points", RARITY_POINTS.get(rarity, 100))),
             "is_secret": bool(m.get("is_secret", m.get("type") == "secret")),
+            "time_limit_minutes": m.get("time_limit_minutes"),
             "generated_by": "ai",
         })
     if not out:
         raise ValueError("AI returned no missions")
     return out
+
+
+def _apply_timers(missions: list[dict]) -> list[dict]:
+    """Convert an optional `time_limit_minutes` into an absolute `expires_at`.
+
+    Missions without a time limit get expires_at=None and never expire.
+    The clock starts now (when missions are generated at trip start).
+    """
+    now = datetime.now(timezone.utc)
+    for m in missions:
+        minutes = m.pop("time_limit_minutes", None)
+        m["expires_at"] = now + timedelta(minutes=int(minutes)) if minutes else None
+    return missions
 
 
 def _call_claude(trip: dict, players: list[dict], counts: dict) -> str:
@@ -100,14 +119,14 @@ def generate_missions(trip: dict, players: list[dict],
     settings = get_settings()
 
     if not settings.ai_enabled:
-        return build_fallback_missions(trip, players, counts)
+        return _apply_timers(build_fallback_missions(trip, players, counts))
 
     for attempt in range(2):  # try once, retry once
         try:
             raw = _call_claude(trip, players, counts)
-            return _parse_and_map(raw, players)
+            return _apply_timers(_parse_and_map(raw, players))
         except Exception as exc:  # noqa: BLE001 - demo safety net
             print(f"[ai] mission generation attempt {attempt + 1} failed: {exc}")
 
     print("[ai] falling back to hardcoded mission deck")
-    return build_fallback_missions(trip, players, counts)
+    return _apply_timers(build_fallback_missions(trip, players, counts))

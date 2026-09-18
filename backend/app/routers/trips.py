@@ -5,6 +5,7 @@ from app.deps import get_current_user
 from app.models import (JoinIn, LeaderboardEntry, MissionOut, TripCreate,
                         TripOut)
 from app.services.ai import generate_missions
+from app.services.timers import is_expired
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
@@ -70,7 +71,8 @@ def list_missions(trip_id: str, current=Depends(get_current_user)):
         m for m in all_missions
         if not m["is_secret"] or m["assignee_user_id"] == current["id"]
     ]
-    return visible
+    # Annotate computed expiry so the client can render timed-out missions.
+    return [{**m, "is_expired": is_expired(m)} for m in visible]
 
 
 @router.get("/{trip_id}/leaderboard", response_model=list[LeaderboardEntry])

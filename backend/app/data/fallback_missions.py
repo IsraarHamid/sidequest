@@ -38,11 +38,17 @@ def build_fallback_missions(trip: dict, players: list[dict], counts: dict) -> li
     for p in players:
         picks = random.sample(_SOLO, min(solo_n, len(_SOLO)))
         for title, desc in picks:
+            # ~1 in 4 missions is a timed "flash" challenge; the rest are untimed.
+            timed = random.random() < 0.25
             out.append({
                 "assignee_user_id": p["id"],
-                "title": title, "description": desc,
-                "type": "solo", "rarity": "common",
-                "points": RARITY_POINTS["common"], "is_secret": False,
+                "title": ("⚡ " + title) if timed else title,
+                "description": desc,
+                "type": "solo",
+                "rarity": "rare" if timed else "common",
+                "points": RARITY_POINTS["rare"] if timed else RARITY_POINTS["common"],
+                "is_secret": False,
+                "time_limit_minutes": random.choice([15, 30]) if timed else None,
                 "generated_by": "fallback",
             })
         # secret mission targeting another player

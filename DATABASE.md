@@ -403,6 +403,10 @@ create table user_passes (
   service so they can't drift.
 - **Strangers joining a trip** (a "later" feature) needs **no schema change** — it's
   just another `trip_members` row with `role = 'player'` created via a discovery flow.
+- **Timed missions:** `missions.expires_at` is nullable — most missions have no
+  limit (`NULL`) and never expire; some are timed. The clock starts at trip start
+  (when missions are generated). The API rejects completing an expired mission
+  (`409`), and the missions list returns a computed `is_expired` flag for the UI.
 
 ---
 
