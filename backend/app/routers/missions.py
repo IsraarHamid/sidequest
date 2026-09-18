@@ -24,8 +24,10 @@ async def upload_photo(mission_id: str, file: UploadFile = File(...),
         raise HTTPException(status_code=400, detail="Only image uploads are allowed")
 
     data = await file.read()
-    if len(data) > 10 * 1024 * 1024:  # 10 MB cap
-        raise HTTPException(status_code=413, detail="Image too large (max 10 MB)")
+    # Accept large phone photos; we compress before storing. Hard-reject only
+    # above 40 MB so even an uncompressible file stays under Supabase's 50 MB cap.
+    if len(data) > 40 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Image too large (max 40 MB)")
     try:
         result = upload_mission_photo(
             user_id=current["id"], trip_id=mission["trip_id"],
@@ -33,7 +35,8 @@ async def upload_photo(mission_id: str, file: UploadFile = File(...),
         )
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"Upload failed: {exc}")
-    return {"photo_url": result["url"], "path": result["path"]}
+    return {"photo_url": result["url"], "path": result["path"],
+            "bytes": result.get("bytes")}
 
 
 @router.post("/{mission_id}/complete", response_model=CompletionOut)

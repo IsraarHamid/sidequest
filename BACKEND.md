@@ -81,8 +81,12 @@ User mission photos go to **Supabase Storage** via `services/storage.py`.
 - **Per-user paths:** `{user_id}/{trip_id}/{mission_id}/{uuid}.{ext}` — organised on a user level.
 - **Flow:** `POST /missions/{id}/photo` (multipart) → uploads → returns `{photo_url}` → pass it to `POST /missions/{id}/complete`, which stores it on `mission_completions.photo_url`.
 - **History:** `GET /users/me/photos` returns the user's uploaded photos (from their completions) — used for history/feed.
+- **Compression:** every image is compressed server-side before upload
+  (`services/images.py`, Pillow) — auto-oriented, downscaled to ≤1600px, re-encoded
+  JPEG q82. Typical phone photo → a few hundred KB, well under Supabase's 50 MB/file
+  and 1 GB total. Unsupported inputs (e.g. HEIC without a plugin) pass through.
 - **Demo posture:** **public bucket** (stable URLs, unguessable UUID paths) for a seamless demo. For production, switch to a private bucket + signed URLs + RLS.
-- **Guards:** images only, 10 MB cap; 503 if Supabase isn't configured (never crashes).
+- **Guards:** images only; 40 MB raw cap (rejected above, else compressed down); 503 if Supabase isn't configured (never crashes). *(Client-side compression can be added when the photo-picker UI is built, to save upload bandwidth too.)*
 
 ---
 
