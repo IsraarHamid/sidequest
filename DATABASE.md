@@ -476,14 +476,16 @@ production posture, enable RLS with policies like:
 
 ## 8. Seed data
 
-**Admin override user (required).** While Google sign-in is in development, seed an
-admin account so the app can be used without OAuth:
+**Admin override user (required).** While Google sign-in is in development, an admin
+account lets the app be used without OAuth. Credentials are **not hardcoded** — the
+backend seeds them **from environment variables** into the `users` table on startup:
 
-- `email` = `betterbash@gmail.com`, `password` = `betterbash` (stored **hashed**),
-  `auth_provider = 'email'`, `is_admin = true`, `display_name = 'Better Bash'`.
-
-The backend seeds this automatically (`store._seed()` today; a Supabase migration/
-seed when wired). Never commit the plaintext beyond this documented demo credential.
+- Set `ADMIN_EMAIL` / `ADMIN_PASSWORD` in the backend env (`.env`).
+- `store._seed()` inserts the row (`auth_provider='email'`, `is_admin=true`,
+  password stored **hashed**) if it doesn't already exist. Once seeded, the row
+  persists in the DB and login validates against it.
+- No plaintext credential lives in source; the values live in `.env` (gitignored)
+  and as a hashed row in the database.
 
 **For a lively demo**, also pre-insert a few `businesses` (real SA spots on your
 demo route) and a handful of `badges` (`first_mission`, `five_missions`,

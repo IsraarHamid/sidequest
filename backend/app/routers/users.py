@@ -52,3 +52,9 @@ def me(current=Depends(get_current_user)):
 @router.put("/users/me/preferences", response_model=UserOut)
 def set_preferences(prefs: Preferences, current=Depends(get_current_user)):
     return store.set_preferences(current["id"], prefs.model_dump())
+
+
+@router.get("/users/me/photos")
+def my_photos(current=Depends(get_current_user)):
+    """The current user's uploaded mission photos (history)."""
+    return store.list_user_photos(current["id"])

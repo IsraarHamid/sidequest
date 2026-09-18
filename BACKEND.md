@@ -73,17 +73,16 @@
 
 **Why Supabase (current lean):** Postgres relational model fits our entities (users ↔ groups ↔ missions ↔ rankings ↔ businesses) far better than a document store, and it bundles **Auth + Realtime + Storage** in one free service. If real-time proves painful, fall back to **short polling** for the demo.
 
-### File & photo storage — ✅ Supabase Storage (confirmed)
+### File & photo storage — ✅ Supabase Storage (implemented)
 
-We store all files (mission checkpoint photos, avatars, feed images) in **Supabase Storage** — same project, same auth, one free tier (~1 GB storage + bandwidth, ample for the hackathon). No second service to manage.
+User mission photos go to **Supabase Storage** via `services/storage.py`.
 
-- **Buckets:**
-  - `mission-photos` — checkpoint completion images (link to `mission_completion.photo_url`)
-  - `avatars` — user profile images (optional in MVP)
-  - `feed` — travel-feed images (later)
-- **How it works:** backend/client uploads the file to the bucket → we store the **path/URL** on the DB row (e.g. `mission_completion.photo_url`). Serve via **signed URLs** (private bucket) so only trip members can view.
-- **MVP posture:** photos are the **first stretch goal**, not core. Ship *mark-complete only* first; add photo upload once the core loop works (it's high demo value for the business-tagging story).
-- **Alternative (only if needed):** Cloudinary free tier for on-the-fly image resizing/optimisation — not required for the demo.
+- **Bucket:** `STORAGE_BUCKET` (default `mission-photos`), created on first use.
+- **Per-user paths:** `{user_id}/{trip_id}/{mission_id}/{uuid}.{ext}` — organised on a user level.
+- **Flow:** `POST /missions/{id}/photo` (multipart) → uploads → returns `{photo_url}` → pass it to `POST /missions/{id}/complete`, which stores it on `mission_completions.photo_url`.
+- **History:** `GET /users/me/photos` returns the user's uploaded photos (from their completions) — used for history/feed.
+- **Demo posture:** **public bucket** (stable URLs, unguessable UUID paths) for a seamless demo. For production, switch to a private bucket + signed URLs + RLS.
+- **Guards:** images only, 10 MB cap; 503 if Supabase isn't configured (never crashes).
 
 ---
 
@@ -144,6 +143,8 @@ Not exhaustive — a shared starting point. All return JSON; auth via `Authoriza
 - `POST /auth/google` — Google sign-in (**501 — in development**; use the override)
 - `GET /users/me` — current user (includes `is_admin`, `avatar_color`, `initials`)
 - `PUT /users/me/preferences` — set preferences
+- `GET /users/me/photos` — the user's uploaded mission photos (history)
+- *Admin override is seeded from env (`ADMIN_EMAIL`/`ADMIN_PASSWORD`) into the DB — not hardcoded.*
 
 **Trips**
 - `GET /trips` — trips the current user belongs to (dashboard)
@@ -159,6 +160,7 @@ Not exhaustive — a shared starting point. All return JSON; auth via `Authoriza
 
 **Missions**
 - `GET /trips/{id}/missions` — missions visible to current user (secret ones filtered to owner)
+- `POST /missions/{id}/photo` — upload an image (multipart) to Supabase Storage → returns `{photo_url}`
 - `POST /missions/{id}/complete` — mark complete (+ optional `photo_url`) → awards points, sets `is_first`
 - `POST /missions/{id}/rankings` — a friend ranks a completion
 
