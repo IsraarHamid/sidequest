@@ -125,10 +125,17 @@ const inputCls =
 
 const passwordInputCls = cn(inputCls, "pr-12");
 
+// Design size of the notebook + auth-buttons group (notebook 512 + gap 26 + 3 buttons/gaps 168),
+// used to scale the whole group uniformly to fit the available viewport space.
+const STAGE_WIDTH = 354;
+const STAGE_HEIGHT = 706;
+
 export const WelcomeScreen = () => {
   const router = useRouter();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   const [mode, setMode] = useState<"signin" | "register">("signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -152,6 +159,19 @@ export const WelcomeScreen = () => {
     } catch {
       /* ignore (private mode etc.) */
     }
+  }, []);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      setScale(Math.min(width / STAGE_WIDTH, height / STAGE_HEIGHT));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   const finish = (displayName: string) => {
@@ -245,33 +265,38 @@ export const WelcomeScreen = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <main className="flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#F2F2ED]">
-        <div className="flex w-full max-w-[430px] flex-col items-center justify-center gap-[26px] px-5 py-8">
-          <div className="login-rise">
-            <Notebook ownerName={signedInName ?? lastName} />
-          </div>
-
-          {!signedInName && (
-            <div className="flex w-[300px] max-w-full flex-col gap-3">
-              {/* Third-party sign-in (in development — kept for the teammate to wire) */}
-              <AuthButton variant="google" label="Continue with Google" onClick={handleGoogle} />
-              <AuthButton variant="apple" label="Continue with Apple" onClick={handleApple} />
-
-              <div className="flex items-center gap-3 py-1">
-                <div className="h-px flex-1 bg-[#DDD2C0]" />
-                <span className="font-sans text-[12px] text-[#8A7A69]">or</span>
-                <div className="h-px flex-1 bg-[#DDD2C0]" />
+      <main className="flex h-svh w-full items-center justify-center overflow-hidden bg-[#F2F2ED]">
+        <div className="flex h-full w-full max-w-[430px] items-center justify-center px-5 py-8">
+          <div ref={stageRef} className="flex h-full w-full items-center justify-center">
+            <div
+              className="flex flex-col items-center justify-center gap-[26px]"
+              style={{ width: STAGE_WIDTH, transform: `scale(${scale})` }}
+            >
+              <div className="login-rise">
+                <Notebook ownerName={signedInName ?? lastName} />
               </div>
 
-              <AuthButton
-                variant="email"
-                label="Continue with Email"
-                onClick={handleOpenEmailSheet}
-              />
+              {!signedInName && (
+                <div className="flex w-[300px] max-w-full flex-col gap-3">
+                  <AuthButton
+                    variant="email"
+                    label="Continue with Email"
+                    onClick={handleOpenEmailSheet}
+                  />
 
-              {info && <p className="font-sans text-[13px] text-[#8A7A69]">{info}</p>}
+                  {/* Third-party sign-in (in development — kept for the teammate to wire) */}
+                  <AuthButton
+                    variant="google"
+                    label="Continue with Google"
+                    onClick={handleGoogle}
+                  />
+                  <AuthButton variant="apple" label="Continue with Apple" onClick={handleApple} />
+
+                  {info && <p className="font-sans text-[13px] text-[#8A7A69]">{info}</p>}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         <Drawer.Root open={emailSheetOpen} onOpenChange={handleEmailSheetOpenChange}>
