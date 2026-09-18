@@ -15,23 +15,24 @@ export default function JoinTripPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Prefill the code from an invite link (?code=XXXX) without needing Suspense.
+  // Prefill the code from an invite link (?code=12345) without needing Suspense.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const c = params.get("code");
-    if (c) setCode(c.toUpperCase());
+    if (c) setCode(c.replace(/\D/g, "").slice(0, 5));
   }, []);
 
   async function handleJoin() {
-    if (!code.trim()) {
-      setError("Enter the trip code your crew shared.");
+    const clean = code.replace(/\D/g, "");
+    if (clean.length !== 5) {
+      setError("Enter the 5-digit trip code your crew shared.");
       return;
     }
     setError(null);
     setLoading(true);
     try {
       await ensureUser();
-      const joined = await api.joinTrip(code.trim().toUpperCase());
+      const joined = await api.joinTrip(clean);
       setTrip(joined);
     } catch {
       setError("No trip found for that code. Double-check it and try again.");
@@ -68,10 +69,17 @@ export default function JoinTripPage() {
             </div>
             <input
               value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="ABC123"
-              autoCapitalize="characters"
-              className="text-[28px]/[normal] box-border w-full h-[64px] bg-[#FBF7F0] [outline:2px_solid_#4A3B2E] [outline-offset:-1px] rounded-2xl px-[18px] text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-extrabold tracking-[6px] text-center uppercase outline-none placeholder:text-[#DDD2C0] placeholder:tracking-[6px]"
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleJoin();
+              }}
+              placeholder="12345"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="one-time-code"
+              maxLength={5}
+              className="text-[28px]/[normal] box-border w-full h-[64px] bg-[#FBF7F0] [outline:2px_solid_#4A3B2E] [outline-offset:-1px] rounded-2xl px-[18px] text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-extrabold tracking-[6px] text-center outline-none placeholder:text-[#DDD2C0] placeholder:tracking-[6px]"
             />
             <div className="box-border w-full h-fit shrink-0 flex flex-row gap-[7px] justify-start items-center">
               <Info className="w-[14px] h-[14px] shrink-0" color="#8A7A69" />

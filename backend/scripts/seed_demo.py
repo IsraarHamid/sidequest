@@ -65,39 +65,56 @@ def main() -> None:
     if c.post("/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}).status_code != 200:
         sys.exit("admin login failed — check ADMIN_* env / backend")
 
-    # Reset the prototype: wipe all trips, and remove every user except the 4 allowed.
-    from supabase import create_client
-    sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
-    sb.table("trips").delete().not_.is_("id", "null").execute()
-    removed = 0
-    for u in (sb.table("users").select("id,email").execute().data or []):
-        if (u.get("email") or "").lower() not in KEEP_EMAILS:
-            sb.table("users").delete().eq("id", u["id"]).execute()
-            removed += 1
-    print(f"reset: wiped all trips; removed {removed} non-team users")
+    # DESTRUCTIVE reset is OPT-IN only (python scripts/seed_demo.py --reset).
+    # Without it we NEVER touch existing users — teammates who registered keep
+    # their accounts, and their data persists in Supabase across restarts. The
+    # default run just (re)creates the crew + one demo trip.
+    if "--reset" in sys.argv:
+        from supabase import create_client
+        sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+        sb.table("trips").delete().not_.is_("id", "null").execute()
+        removed = 0
+        for u in (sb.table("users").select("id,email").execute().data or []):
+            if (u.get("email") or "").lower() not in KEEP_EMAILS:
+                sb.table("users").delete().eq("id", u["id"]).execute()
+                removed += 1
+        print(f"--reset: wiped all trips; removed {removed} non-team users")
+    else:
+        print("seed: additive mode (no --reset) — existing users are left intact")
 
     # Crew
     israar = user(c, "Israar", CREW[0]["email"], CREW[0]["interests"])
     mj = user(c, "MJ", CREW[1]["email"], CREW[1]["interests"], CREW[1].get("diet"))
     jackie = user(c, "Jackie", CREW[2]["email"], CREW[2]["interests"])
 
-    # The crew trip — hosted by Israar, with MJ + Jackie.
-    trip = c.post("/trips", headers=israar, json={
-        "name": "Garden Route Crew", "origin": "Cape Town", "destination": "Knysna",
-        "vibe": "food, nature & photography", "start_date": "2026-10-12", "end_date": "2026-10-18",
-    }).json()
+    # The crew trip — hosted by Israar, with MJ + Jackie. Idempotent: reuse the
+    # existing demo trip if one is already there (so additive re-runs don't pile
+    # up duplicates).
+    existing = next((t for t in c.get("/trips", headers=israar).json()
+                     if t.get("name") == "Garden Route Crew"), None)
+    if existing:
+        trip = existing
+        print(f"seed: reusing existing '{trip['name']}' (join code {trip['join_code']})")
+    else:
+        trip = c.post("/trips", headers=israar, json={
+            "name": "Garden Route Crew", "origin": "Cape Town", "destination": "Knysna",
+            "vibe": "food, nature & photography", "start_date": "2026-10-12", "end_date": "2026-10-18",
+        }).json()
     tid, code = trip["id"], trip["join_code"]
     for h in (mj, jackie):
         c.post("/trips/join", headers=h, json={"join_code": code})
 
-    missions = c.post(f"/trips/{tid}/start", headers=israar).json()
-    players = [israar, mj, jackie]
-    solo = [m for m in missions if m["type"] == "solo"]
-    for i, m in enumerate(solo[:6]):
-        upload_and_complete(c, players[i % len(players)], m["id"], f"{tid[:6]}-{i}")
-    if solo:
-        for cat in ("funniest", "best_photo", "most_creative"):
-            c.post(f"/missions/{solo[0]['id']}/rankings", headers=israar, json={"category": cat})
+    # Only generate missions if the trip has none yet (avoid stacking on re-run).
+    missions = c.get(f"/trips/{tid}/missions", headers=israar).json()
+    if not missions:
+        missions = c.post(f"/trips/{tid}/start", headers=israar).json()
+        players = [israar, mj, jackie]
+        solo = [m for m in missions if m["type"] == "solo"]
+        for i, m in enumerate(solo[:6]):
+            upload_and_complete(c, players[i % len(players)], m["id"], f"{tid[:6]}-{i}")
+        if solo:
+            for cat in ("funniest", "best_photo", "most_creative"):
+                c.post(f"/missions/{solo[0]['id']}/rankings", headers=israar, json={"category": cat})
 
     lb = c.get(f"/trips/{tid}/leaderboard", headers=israar).json()
     print(f"\n'{trip['name']}' — {len(missions)} missions, photos uploaded")
