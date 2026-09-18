@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/trip-quest/page-header";
+import { api } from "@/lib/api";
 import {
   DEFAULT_SELECTED_INTERESTS,
   DEFAULT_SELECTED_VIBE,
@@ -51,11 +52,28 @@ export default function PreferencesPage() {
   const { tripId } = useParams<{ tripId: string }>();
   const [selectedInterests, setSelectedInterests] = useState<string[]>(DEFAULT_SELECTED_INTERESTS);
   const [selectedVibe, setSelectedVibe] = useState<string>(DEFAULT_SELECTED_VIBE);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function toggleInterest(id: string) {
     setSelectedInterests((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
+  }
+
+  async function savePreferences() {
+    setError(null);
+    setSaving(true);
+    try {
+      await api.setPreferences({
+        interests: selectedInterests,
+        adventure_level: selectedVibe,
+      });
+      router.push(`/trips/${tripId}/missions`);
+    } catch {
+      setError("Couldn't save preferences. Are you signed in?");
+      setSaving(false);
+    }
   }
 
   return (
@@ -136,13 +154,20 @@ export default function PreferencesPage() {
             })}
           </div>
 
+          {error && (
+            <div className="text-[13px]/[18px] box-border w-full text-[#D0392F] font-[Geist,system-ui,sans-serif] font-medium text-left">
+              {error}
+            </div>
+          )}
+
           <button
             type="button"
-            onClick={() => router.push(`/trips/${tripId}/lobby`)}
-            className="box-border w-full h-[48px] shrink-0 flex flex-row gap-[8px] p-[16px_32px] justify-center items-center bg-[#121212] rounded-full"
+            onClick={savePreferences}
+            disabled={saving}
+            className="box-border w-full h-[48px] shrink-0 flex flex-row gap-[8px] p-[16px_32px] justify-center items-center bg-[#121212] rounded-full disabled:opacity-60"
           >
             <div className="text-[15px]/[normal] box-border text-[#FBF7F0] font-[Geist,system-ui,sans-serif] font-semibold text-left whitespace-nowrap">
-              Save preferences
+              {saving ? "Saving…" : "Save preferences"}
             </div>
             <Check className="w-[17px] h-[17px] shrink-0" color="#FBF7F0" />
           </button>
