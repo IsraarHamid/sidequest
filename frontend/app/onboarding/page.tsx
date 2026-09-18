@@ -25,7 +25,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div className="text-[44px]/[46px] box-border text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-extrabold tracking-[-0.5px] text-left whitespace-nowrap">
-              Trip Quest
+              SideQuest
             </div>
             <div className="text-[15px]/[23px] box-border w-full text-[#8A7A69] font-[Geist,system-ui,sans-serif] font-normal text-left">
               Turn your next trip into a game. AI-made missions, real points, bragging rights.

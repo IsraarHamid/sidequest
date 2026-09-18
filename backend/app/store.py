@@ -132,6 +132,17 @@ def get_business(business_id: str) -> dict | None:
     return businesses.get(business_id)
 
 
+# ---- Rich mission plans (from mission_generator.md via the LLM) ----
+def save_plan(trip_id: str, plan: dict) -> dict:
+    trips[trip_id]["plan"] = plan
+    return plan
+
+
+def get_plan(trip_id: str) -> dict | None:
+    trip = trips.get(trip_id)
+    return trip.get("plan") if trip else None
+
+
 # ---- Missions ----
 def save_missions(trip_id: str, mission_dicts: list[dict]) -> list[dict]:
     saved = []
