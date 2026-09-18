@@ -153,3 +153,22 @@
     transform: none;
   }
 }
+
+html.sandbox-preview body {
+  padding-top: 54px;
+}
+
+html.sandbox-studio,
+html.sandbox-studio body {
+  height: 100svh;
+  width: 100%;
+  overflow: hidden;
+  background: #1e1a16;
+}
+
+html.sandbox-studio body {
+  display: block;
+  min-height: 100svh;
+  margin: 0;
+  padding: 0;
+}
