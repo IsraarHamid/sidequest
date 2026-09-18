@@ -80,12 +80,13 @@ def main() -> None:
     admin = r.json()
     ah = {"X-User-Id": admin["id"]}
 
-    # Clean the admin's previous trips (cascade) for a pristine demo.
+    # Wipe ALL trips (cascades missions/members/completions) for a pristine demo.
+    # This is a demo DB; the seed is the source of truth for demo state.
     try:
         from supabase import create_client
         sb = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
-        sb.table("trips").delete().eq("created_by", admin["id"]).execute()
-        print("cleaned admin's previous trips")
+        sb.table("trips").delete().not_.is_("id", "null").execute()
+        print("cleaned all previous trips (fresh demo state)")
     except Exception as exc:  # noqa: BLE001
         print(f"(cleanup skipped: {exc})")
 
