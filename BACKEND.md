@@ -62,7 +62,7 @@
 | Database | **Supabase (Postgres)** | Firebase, raw Postgres/Neon | See §5 |
 | Auth | **Supabase Auth** | Firebase Auth, custom JWT | Anonymous + email; JWT verified in API |
 | Real-time | **Supabase Realtime** | Firebase, WebSockets, polling | For live leaderboard/mission status |
-| File/photo storage | **Supabase Storage** | Firebase Storage, Cloudinary (free tier) | Mission checkpoint photos |
+| File/photo storage | **Supabase Storage** ✅ *confirmed* | Cloudinary (free tier — only if heavy image transforms needed), Firebase Storage | Mission checkpoint photos — see storage note below |
 | AI / mission engine | **Claude `claude-sonnet-5`** (Anthropic API) | — | Server-side only (§8) |
 | Hosting (API) | **Render / Railway free tier** or **Fly.io** | Any container host | FastAPI needs a Python host (not Vercel-static) |
 | Env / secrets | **`.env` + host env vars** | — | Never commit secrets |
@@ -71,6 +71,18 @@
 > ⚠️ **Deployment note:** Vercel is for the *frontend*. FastAPI is a Python service → deploy to **Render/Railway/Fly.io** (all have free tiers), or run locally + tunnel (ngrok) for the demo if hosting is fiddly.
 
 **Why Supabase (current lean):** Postgres relational model fits our entities (users ↔ groups ↔ missions ↔ rankings ↔ businesses) far better than a document store, and it bundles **Auth + Realtime + Storage** in one free service. If real-time proves painful, fall back to **short polling** for the demo.
+
+### File & photo storage — ✅ Supabase Storage (confirmed)
+
+We store all files (mission checkpoint photos, avatars, feed images) in **Supabase Storage** — same project, same auth, one free tier (~1 GB storage + bandwidth, ample for the hackathon). No second service to manage.
+
+- **Buckets:**
+  - `mission-photos` — checkpoint completion images (link to `mission_completion.photo_url`)
+  - `avatars` — user profile images (optional in MVP)
+  - `feed` — travel-feed images (later)
+- **How it works:** backend/client uploads the file to the bucket → we store the **path/URL** on the DB row (e.g. `mission_completion.photo_url`). Serve via **signed URLs** (private bucket) so only trip members can view.
+- **MVP posture:** photos are the **first stretch goal**, not core. Ship *mark-complete only* first; add photo upload once the core loop works (it's high demo value for the business-tagging story).
+- **Alternative (only if needed):** Cloudinary free tier for on-the-fly image resizing/optimisation — not required for the demo.
 
 ---
 
@@ -241,13 +253,23 @@ CLAUDE_MODEL=claude-sonnet-5
 
 ---
 
-## 12. Open decisions (resolve as we go — log the outcome here)
+## 12. Decisions log (resolved — optimised for speed + zero cost)
 
-- [ ] Supabase vs Firebase — **leaning Supabase**; confirm real-time works for leaderboard.
-- [ ] API hosting: Render vs Railway vs Fly.io vs local+ngrok for demo.
-- [ ] Photo uploads in MVP, or mark-complete only for the demo?
-- [ ] Real-time leaderboard vs simple polling for the demo (polling is the safe fallback).
-- [ ] How much of "first-to-finish" bonus logic to build vs fake for the demo.
+- [x] **Database → Supabase (Postgres + Auth + Storage).** One free service covers DB, auth, and files. *Note: free project pauses after ~1 week idle — run a query to wake it before demo day.*
+- [x] **Real-time leaderboard → Polling, not Realtime (for MVP).** Client polls `GET /trips/{id}/leaderboard` every 3–5s. ~5 lines, works everywhere, can't break on stage. Upgrade to Supabase Realtime only if we finish early. **Biggest de-risk of the build.**
+- [x] **API hosting → Local-first for dev & demo; Render free tier only if a public URL is required.** Run `uvicorn` locally (frontend local too) for the actual demo = zero cost, no cold-start, most reliable. Render free tier = optional public link (⚠️ ~50s cold-start after idle → ping it right before presenting). ngrok only for FE↔local-BE integration testing.
+- [x] **File/photo storage → Supabase Storage** (see §4 storage note). Private buckets + signed URLs.
+- [x] **Photos → Mark-complete first (core), photo upload as first stretch goal.** Guarantees a working loop; photos added once core works (high demo value for business-tagging story).
+- [x] **First-to-finish bonus → Build it for real (it's trivial).** On `POST /missions/{id}/complete`, if no completion exists yet for that `mission_id`, set `is_first=true` + apply bonus. One query, ~10 lines.
+
+### Fastest path to "up and running"
+1. Create Supabase project (free) → grab URL + keys.
+2. Run MVP tables via Supabase SQL editor (users, preferences, trips, trip_members, missions, mission_completions).
+3. Scaffold FastAPI locally → `uvicorn app.main:app --reload` → confirm `/docs`.
+4. Wire Supabase client + `.env` → one test read/write.
+5. Add Claude mission engine (`services/ai.py`) with JSON contract + fallback deck.
+6. Build core loop: create trip → join by code → generate missions → complete (first-to-finish) → poll leaderboard.
+7. Stretch: photo upload, badges beyond basics, realtime, feed.
 
 ---
 
