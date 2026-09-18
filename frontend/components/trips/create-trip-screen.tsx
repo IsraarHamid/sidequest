@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useRef,
-  useState,
-  type ChangeEvent,
-  type KeyboardEvent,
-  type PointerEvent,
-  type FormEvent,
-} from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type DateRange } from "react-day-picker";
@@ -16,18 +9,6 @@ import { cn } from "cn";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { api, ensureUser } from "@/lib/api";
-
-const GRID_COLUMNS = 35;
-const GRID_ROWS = 3;
-const DEFAULT_SOLO_COLUMNS = 15;
-const GRID_CELLS = Array.from({ length: GRID_COLUMNS * GRID_ROWS }, (_, index) => {
-  const column = index % GRID_COLUMNS;
-  const row = Math.floor(index / GRID_COLUMNS);
-  return {
-    index,
-    isBlack: (column + row) % 2 === 0,
-  };
-});
 
 const actionClassName = cn(
   "box-border flex h-12 w-full shrink-0 flex-row items-center justify-center rounded-full px-8",
@@ -63,13 +44,8 @@ const pickerContentClassName = cn(
   "origin-(--transform-origin)",
 );
 
-const snapColumnFromClientX = (clientX: number, rect: DOMRect) => {
-  if (rect.width <= 0) return 0;
-  const ratio = (clientX - rect.left) / rect.width;
-  return Math.min(GRID_COLUMNS, Math.max(0, Math.round(ratio * GRID_COLUMNS)));
-};
-
 type DateField = "start" | "end";
+type QuestType = "solo" | "together";
 
 const TicketDateRange = ({
   range,
@@ -193,105 +169,62 @@ const TicketDateRange = ({
   );
 };
 
-const MixSlider = ({
+const questTypeLabelClassName = cn(
+  "font-mono leading-none tracking-[1px] transition-[color,font-size] duration-200 ease",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
+  "motion-reduce:transition-none",
+);
+
+const getQuestTypeLabelClassName = (isSelected: boolean) =>
+  cn(
+    questTypeLabelClassName,
+    isSelected ? "text-[19px] text-black" : "text-[11px] text-[#8A7A69]",
+  );
+
+const QuestTypeToggle = ({
   value,
   onChange,
 }: {
-  value: number;
-  onChange: (columns: number) => void;
+  value: QuestType | null;
+  onChange: (value: QuestType) => void;
 }) => {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleValueFromClientX = (clientX: number) => {
-    const track = trackRef.current;
-    if (!track) return;
-    onChange(snapColumnFromClientX(clientX, track.getBoundingClientRect()));
+  const handleSelectSolo = () => {
+    onChange("solo");
   };
 
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setIsDragging(true);
-    handleValueFromClientX(event.clientX);
+  const handleSelectTogether = () => {
+    onChange("together");
   };
-
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-    handleValueFromClientX(event.clientX);
-  };
-
-  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-    event.currentTarget.releasePointerCapture(event.pointerId);
-    setIsDragging(false);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
-      event.preventDefault();
-      onChange(Math.max(0, value - 1));
-      return;
-    }
-    if (event.key === "ArrowRight" || event.key === "ArrowUp") {
-      event.preventDefault();
-      onChange(Math.min(GRID_COLUMNS, value + 1));
-      return;
-    }
-    if (event.key === "Home") {
-      event.preventDefault();
-      onChange(0);
-      return;
-    }
-    if (event.key === "End") {
-      event.preventDefault();
-      onChange(GRID_COLUMNS);
-    }
-  };
-
-  const soloPercent = Math.round((value / GRID_COLUMNS) * 100);
 
   return (
-    <div
-      ref={trackRef}
-      role="slider"
-      tabIndex={0}
-      aria-label="Solo to together mix"
-      aria-valuemin={0}
-      aria-valuemax={GRID_COLUMNS}
-      aria-valuenow={value}
-      aria-valuetext={`${soloPercent}% solo`}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onKeyDown={handleKeyDown}
-      className={cn(
-        "relative h-[17px] w-full cursor-pointer touch-none select-none overflow-hidden outline-none",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
-      )}
-    >
+    <div className="flex w-full flex-col items-center gap-6">
+      <span className="font-mono text-[11px] leading-none tracking-[1px] text-[#8A7A69]">
+        QUEST TYPES
+      </span>
       <div
-        aria-hidden="true"
-        className="grid h-full w-full grid-cols-[repeat(35,minmax(0,1fr))] grid-rows-3"
+        role="radiogroup"
+        aria-label="Quest type"
+        className="flex w-full flex-row items-center justify-between gap-2"
       >
-        {GRID_CELLS.map((cell) => (
-          <div
-            key={cell.index}
-            className={cell.isBlack ? "bg-black" : "bg-transparent"}
-          />
-        ))}
+        <button
+          type="button"
+          role="radio"
+          aria-checked={value === "solo"}
+          onClick={handleSelectSolo}
+          className={getQuestTypeLabelClassName(value === "solo")}
+        >
+          SOLO
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={value === "together"}
+          onClick={handleSelectTogether}
+          className={getQuestTypeLabelClassName(value === "together")}
+        >
+          TOGETHER
+        </button>
       </div>
-      <div
-        aria-hidden="true"
-        className={cn(
-          "pointer-events-none absolute inset-y-0 left-0 w-full origin-left bg-black will-change-transform",
-          !isDragging &&
-            "transition-transform duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
-          "motion-reduce:transition-none",
-        )}
-        style={{ transform: `scaleX(${value / GRID_COLUMNS})` }}
-      />
     </div>
   );
 };
@@ -300,7 +233,7 @@ export const CreateTripScreen = () => {
   const router = useRouter();
   const [location, setLocation] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: getToday(), to: undefined });
-  const [soloColumns, setSoloColumns] = useState(DEFAULT_SOLO_COLUMNS);
+  const [questType, setQuestType] = useState<QuestType | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -310,10 +243,6 @@ export const CreateTripScreen = () => {
 
   const handleDateRangeChange = (range: DateRange) => {
     setDateRange(range);
-  };
-
-  const handleSoloColumnsChange = (columns: number) => {
-    setSoloColumns(columns);
   };
 
   const handleCreateTrip = async (event: FormEvent<HTMLFormElement>) => {
@@ -345,7 +274,7 @@ export const CreateTripScreen = () => {
         onSubmit={handleCreateTrip}
         className="mx-auto flex w-full max-w-[430px] flex-1 flex-col"
       >
-        <div className="box-border flex w-full flex-1 flex-col items-center gap-[22px] p-[16px_20px_24px_20px]">
+        <div className="box-border flex w-full flex-1 flex-col items-center justify-between gap-[22px] p-[16px_20px_24px_20px]">
           <header className="box-border flex w-full flex-row items-center gap-3">
             <Link
               href="/"
@@ -369,7 +298,7 @@ export const CreateTripScreen = () => {
             className="login-rise relative flex w-[254px] max-w-full shrink-0 flex-col"
             aria-label="Trip ticket"
           >
-            <div className="box-border flex h-[262px] w-full flex-col items-center gap-6 overflow-hidden rounded-[25px] bg-white pt-[61px] pr-[35px] pl-5">
+            <div className="box-border flex h-[262px] w-full flex-col items-center justify-end gap-6 overflow-hidden rounded-[25px] bg-white pt-[61px] pr-[35px] pb-[19px] pl-5">
               <div className="flex w-full flex-col">
                 <label htmlFor="trip-location" className="flex flex-col">
                   <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">
@@ -390,46 +319,30 @@ export const CreateTripScreen = () => {
               </div>
 
               <TicketDateRange range={dateRange} onRangeChange={handleDateRangeChange} />
-
-              <div className="flex w-full flex-col gap-2">
-                <div className="flex w-full flex-row justify-between gap-2">
-                  <span className="font-mono text-[11px] tracking-[1px] text-[#8A7A69]">
-                    SOLO
-                  </span>
-                  <span className="font-mono text-[11px] tracking-[1px] text-[#8A7A69]">
-                    TOGETHER
-                  </span>
-                </div>
-                <MixSlider value={soloColumns} onChange={handleSoloColumnsChange} />
-              </div>
             </div>
 
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute top-[262px] right-6 left-6 z-10 -translate-y-1/2 border-t border-dashed border-[#F2F2ED]"
-            />
-
-            <div
-              aria-hidden="true"
-              className="h-[195px] w-full overflow-hidden rounded-[25px] bg-white"
-            />
+            <div className="box-border flex h-[120px] w-full flex-col items-center justify-center overflow-hidden rounded-[25px] bg-white px-5">
+              <QuestTypeToggle value={questType} onChange={setQuestType} />
+            </div>
           </div>
 
-          {error && (
-            <p className="font-sans text-[13px] font-medium text-[#D0392F]">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className={cn(
-              actionClassName,
-              "bg-[#121212] disabled:opacity-60",
-              "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
+          <div className="flex w-full flex-col items-center gap-3">
+            {error && (
+              <p className="font-sans text-[13px] font-medium text-[#D0392F]">{error}</p>
             )}
-          >
-            {submitting ? "Creating…" : "Create trip"}
-          </button>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className={cn(
+                actionClassName,
+                "bg-[#121212] disabled:opacity-60",
+                "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
+              )}
+            >
+              {submitting ? "Creating…" : "Create trip"}
+            </button>
+          </div>
         </div>
       </form>
     </main>
