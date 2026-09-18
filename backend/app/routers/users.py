@@ -58,3 +58,12 @@ def set_preferences(prefs: Preferences, current=Depends(get_current_user)):
 def my_photos(current=Depends(get_current_user)):
     """The current user's uploaded mission photos (history)."""
     return store.list_user_photos(current["id"])
+
+
+@router.get("/users/me/passport")
+def my_passport(current=Depends(get_current_user)):
+    """Badges earned + basic stats for the travel passport."""
+    return {
+        "badges": store.get_user_badges(current["id"]),
+        "missions_completed": store.count_user_completions(current["id"]),
+    }

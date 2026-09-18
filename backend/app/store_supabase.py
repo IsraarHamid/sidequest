@@ -8,6 +8,7 @@ import string
 import uuid
 from datetime import datetime
 
+from app.badges import BADGE_CATALOG, BADGE_BY_CODE, earned_codes
 from app.config import get_settings
 from app.db import get_supabase
 from app.security import hash_password
@@ -21,8 +22,12 @@ def _id() -> str:
     return str(uuid.uuid4())
 
 
+# Unambiguous alphabet — no O/0, I/1/L to avoid mistyped join codes.
+_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
 def _join_code() -> str:
-    return "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    return "".join(random.choices(_CODE_ALPHABET, k=6))
 
 
 def _initials(name: str) -> str:
@@ -279,6 +284,74 @@ def add_completion(mission_id: str, user_id: str, photo_url: str | None,
     return (resp.data[0] if resp.data else row)
 
 
+# ---- Rankings ----
+def get_completion_for_mission(mission_id: str) -> dict | None:
+    resp = (_sb().table("mission_completions").select("*")
+            .eq("mission_id", mission_id).limit(1).execute())
+    return resp.data[0] if resp.data else None
+
+
+def add_ranking(completion_id: str, voter_user_id: str, category: str) -> None:
+    _sb().table("rankings").upsert(
+        {"id": _id(), "completion_id": completion_id,
+         "voter_user_id": voter_user_id, "category": category, "score": 1},
+        on_conflict="completion_id,voter_user_id,category",
+    ).execute()
+
+
+def get_rankings_for_mission(mission_id: str) -> list[dict]:
+    comp = get_completion_for_mission(mission_id)
+    if not comp:
+        return []
+    resp = _sb().table("rankings").select("category").eq("completion_id", comp["id"]).execute()
+    counts: dict[str, int] = {}
+    for r in resp.data or []:
+        counts[r["category"]] = counts.get(r["category"], 0) + 1
+    return [{"category": k, "count": v} for k, v in counts.items()]
+
+
+# ---- Badges / passport ----
+def count_user_completions(user_id: str) -> int:
+    resp = _sb().table("mission_completions").select("id").eq("user_id", user_id).execute()
+    return len(resp.data or [])
+
+
+def _badge_id(code: str) -> str | None:
+    resp = _sb().table("badges").select("id").eq("code", code).limit(1).execute()
+    return resp.data[0]["id"] if resp.data else None
+
+
+def award_badges(user_id: str, trip_id: str, mission: dict, completion: dict) -> list[str]:
+    count = count_user_completions(user_id)
+    owned = {b for b in _owned_codes(user_id)}
+    newly = []
+    for code in earned_codes(mission, completion, count):
+        if code in owned:
+            continue
+        bid = _badge_id(code)
+        if not bid:
+            continue
+        try:
+            _sb().table("user_badges").insert(
+                {"id": _id(), "user_id": user_id, "badge_id": bid, "trip_id": trip_id}
+            ).execute()
+            newly.append(code)
+        except Exception:  # noqa: BLE001 - unique violation = already owned
+            pass
+    return newly
+
+
+def _owned_codes(user_id: str) -> list[str]:
+    resp = (_sb().table("user_badges").select("badges(code)")
+            .eq("user_id", user_id).execute())
+    return [r["badges"]["code"] for r in (resp.data or []) if r.get("badges")]
+
+
+def get_user_badges(user_id: str) -> list[dict]:
+    codes = set(_owned_codes(user_id))
+    return [BADGE_BY_CODE[c] for c in codes if c in BADGE_BY_CODE]
+
+
 def list_user_photos(user_id: str) -> list[dict]:
     """A user's uploaded mission photos (history), newest first."""
     resp = (_sb().table("mission_completions")
@@ -326,3 +399,16 @@ def _seed() -> None:
         name = s.admin_email.split("@")[0].replace(".", " ").title()
         create_email_user(display_name=name, email=s.admin_email,
                           password=s.admin_password, is_admin=True)
+    _seed_badges()
+
+
+def _seed_badges() -> None:
+    """Ensure the badge catalog exists (idempotent on the unique `code`)."""
+    try:
+        existing = {b["code"] for b in (_sb().table("badges").select("code").execute().data or [])}
+        rows = [{"id": _id(), **b, "description": None}
+                for b in BADGE_CATALOG if b["code"] not in existing]
+        if rows:
+            _sb().table("badges").insert(rows).execute()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[seed] badge seed note: {exc}")

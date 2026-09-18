@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { cn } from "cn";
-import { api, type Trip, type User } from "@/lib/api";
+import { api, isAuthError, type Trip, type User } from "@/lib/api";
 import { PhotoStack } from "@/components/trips/photo-stack";
 import { StampAvatar } from "@/components/trips/stamp-avatar";
 
@@ -16,6 +16,7 @@ export const TripsDashboard = () => {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [coverByTrip, setCoverByTrip] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,10 +26,17 @@ export const TripsDashboard = () => {
         const me = await api.me(); // 401 if not signed in
         if (cancelled) return;
         setUser(me);
-        setTrips(await api.myTrips());
-      } catch {
-        if (!cancelled) router.replace("/login");
-        return;
+        const [myTrips, myPhotos] = await Promise.all([api.myTrips(), api.myPhotos()]);
+        if (cancelled) return;
+        setTrips(myTrips);
+        // Use each trip's first uploaded photo as its cover.
+        const covers: Record<string, string> = {};
+        for (const p of myPhotos) {
+          if (p.trip_id && p.photo_url && !covers[p.trip_id]) covers[p.trip_id] = p.photo_url;
+        }
+        setCoverByTrip(covers);
+      } catch (e) {
+        if (!cancelled && isAuthError(e)) router.replace("/login");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -57,7 +65,7 @@ export const TripsDashboard = () => {
               label={`Open ${user.display_name}'s menu`}
               profileHref="/login"
               preferencesHref="/login"
-              logoutHref="/login"
+              logoutHref="/login?logout=1"
             />
 
             <div className="box-border flex h-fit flex-1 flex-row items-center justify-end gap-3">
@@ -124,10 +132,11 @@ export const TripsDashboard = () => {
               {trips.map((trip) => (
                 <PhotoStack
                   key={trip.id}
-                  monthLabel={trip.start_date ?? trip.status}
+                  monthLabel={trip.destination ?? trip.name}
                   destination={trip.destination ?? trip.name}
                   href={`/trips/${trip.id}/missions`}
                   layout="loose"
+                  imageUrl={coverByTrip[trip.id]}
                 />
               ))}
             </div>

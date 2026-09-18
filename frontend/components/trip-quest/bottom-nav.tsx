@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Map, Target, Heart, Trophy } from "lucide-react";
 
-const DEFAULT_MISSION_ID = "local-snack";
-
 export function BottomNav({ tripId }: { tripId: string }) {
   const pathname = usePathname();
 
@@ -21,7 +19,7 @@ export function BottomNav({ tripId }: { tripId: string }) {
       key: "vote",
       label: "Vote",
       icon: Heart,
-      href: `/trips/${tripId}/missions/${DEFAULT_MISSION_ID}/vote`,
+      href: `/trips/${tripId}/vote`,
     },
     {
       key: "ranks",

@@ -77,7 +77,7 @@ export const SandboxSidebar = ({
         "flex h-full shrink-0 flex-col overflow-hidden border-r border-[#FBF7F0]/8 bg-[#161310]",
         "transition-[width] duration-[250ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
         "motion-reduce:transition-none",
-        isOpen ? "w-[272px]" : "w-16",
+        isOpen ? "w-[320px]" : "w-16",
       )}
     >
       <div
@@ -140,28 +140,46 @@ export const SandboxSidebar = ({
                   onClick={() => handleSelectScreen(screen)}
                   onKeyDown={(event) => handleKeyDown(event, screen)}
                   aria-current={isActive ? "page" : undefined}
-                  aria-label={screen.label}
-                  title={isOpen ? undefined : screen.label}
+                  aria-label={`${screen.label}, ${screen.href}`}
+                  title={isOpen ? undefined : `${screen.label} · ${screen.href}`}
                   tabIndex={0}
                   className={cn(
-                    "flex h-9 w-full items-center rounded-lg text-left outline-none",
+                    "flex w-full rounded-lg text-left outline-none",
                     "transition-[background-color,color] duration-200 ease",
                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E8B62C]",
-                    isOpen ? "gap-2.5 px-2.5" : "justify-center px-0",
+                    isOpen
+                      ? "min-h-9 items-start gap-2.5 px-2.5 py-2"
+                      : "h-9 items-center justify-center px-0",
                     isActive
                       ? "bg-[#FBF7F0] text-[#121212]"
                       : "text-[#FBF7F0]/80 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#FBF7F0]/8 [@media(hover:hover)_and_(pointer:fine)]:hover:text-[#FBF7F0]",
                   )}
                 >
-                  <Icon className="size-4 shrink-0" />
-                  <span
+                  <Icon
                     className={cn(
-                      "truncate text-[13px] font-medium",
-                      !isOpen && "sr-only",
+                      "size-4 shrink-0",
+                      isOpen && "mt-0.5",
                     )}
-                  >
-                    {screen.label}
-                  </span>
+                  />
+                  {isOpen ? (
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13px] font-medium leading-tight">
+                        {screen.label}
+                      </span>
+                      <span
+                        className={cn(
+                          "mt-0.5 block truncate font-mono text-[10px] leading-tight tracking-[0.02em]",
+                          isActive ? "text-[#121212]/55" : "text-[#8A7A69]",
+                        )}
+                      >
+                        {screen.href}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="sr-only">
+                      {screen.label} · {screen.href}
+                    </span>
+                  )}
                 </button>
               );
             })}

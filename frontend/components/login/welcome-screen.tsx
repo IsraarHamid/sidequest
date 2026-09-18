@@ -103,9 +103,12 @@ export const WelcomeScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
-  // Landing here clears any session (this is also the "log out" destination).
+  // Only clear the session on an explicit logout (/login?logout=1). Arriving here
+  // any other way (e.g. a transient redirect) must NOT log the user out.
   useEffect(() => {
-    api.logout();
+    if (new URLSearchParams(window.location.search).has("logout")) {
+      api.logout();
+    }
   }, []);
 
   function finish(displayName: string) {

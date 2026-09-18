@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app import store
 from app.deps import get_current_user
-from app.models import CompleteIn, CompletionOut
+from app.models import CompleteIn, CompletionOut, RankingIn
 from app.services.scoring import points_for_completion
 from app.services.storage import storage_enabled, upload_mission_photo
 from app.services.timers import is_expired
@@ -62,4 +62,21 @@ def complete_mission(mission_id: str, body: CompleteIn,
         points_awarded=points,
     )
     store.add_points(mission["trip_id"], current["id"], points)
+    # Award any badges this completion earns (idempotent).
+    store.award_badges(current["id"], mission["trip_id"], mission, completion)
     return {**completion, "points_awarded": points}
+
+
+@router.post("/{mission_id}/rankings")
+def rank_mission(mission_id: str, body: RankingIn, current=Depends(get_current_user)):
+    """Rank a completed mission in a category (friendly competition)."""
+    completion = store.get_completion_for_mission(mission_id)
+    if not completion:
+        raise HTTPException(status_code=400, detail="Mission has no completion to rank yet")
+    store.add_ranking(completion["id"], current["id"], body.category)
+    return store.get_rankings_for_mission(mission_id)
+
+
+@router.get("/{mission_id}/rankings")
+def get_rankings(mission_id: str, current=Depends(get_current_user)):
+    return store.get_rankings_for_mission(mission_id)

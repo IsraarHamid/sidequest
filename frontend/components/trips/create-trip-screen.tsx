@@ -60,7 +60,7 @@ export const CreateTripScreen = () => {
         onSubmit={handleCreateTrip}
         className="mx-auto flex w-full max-w-[430px] flex-1 flex-col"
       >
-        <div className="box-border flex w-full flex-1 flex-col items-center gap-[22px] p-[16px_20px_24px_20px]">
+        <div className="box-border flex w-full flex-1 flex-col items-center justify-between gap-[22px] p-[16px_20px_24px_20px]">
           <header className="box-border flex w-full flex-row items-center gap-3">
             <Link
               href="/"
@@ -80,32 +80,32 @@ export const CreateTripScreen = () => {
             </h1>
           </header>
 
-          <div className="flex flex-1 w-full items-center justify-center">
-            <TripTicket
-              location={location}
-              onLocationChange={setLocation}
-              dateRange={dateRange}
-              onDateRangeChange={setDateRange}
-              questType={questType}
-              onQuestTypeChange={setQuestType}
-            />
-          </div>
+          <TripTicket
+            location={location}
+            onLocationChange={setLocation}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            questType={questType}
+            onQuestTypeChange={setQuestType}
+          />
 
-          {error && (
-            <p className="font-sans text-[13px] font-medium text-[#D0392F]">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className={cn(
-              actionClassName,
-              "bg-[#121212] disabled:opacity-60",
-              "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
+          <div className="flex w-full flex-col items-center gap-3">
+            {error && (
+              <p className="font-sans text-[13px] font-medium text-[#D0392F]">{error}</p>
             )}
-          >
-            {submitting ? "Creating…" : "Create trip"}
-          </button>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className={cn(
+                actionClassName,
+                "bg-[#121212] disabled:opacity-60",
+                "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
+              )}
+            >
+              {submitting ? "Creating…" : "Create trip"}
+            </button>
+          </div>
         </div>
       </form>
     </main>

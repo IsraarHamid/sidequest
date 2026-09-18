@@ -1,6 +1,6 @@
 "use client";
 
-import { type Dispatch, type SetStateAction, useState } from "react";
+import { useState } from "react";
 import { type DateRange } from "react-day-picker";
 import { cn } from "cn";
 import { Calendar } from "@/components/ui/calendar";
@@ -50,6 +50,14 @@ const TicketDateRange = ({
     }
   };
 
+  const handleOpenStart = () => {
+    setOpenField("start");
+  };
+
+  const handleOpenEnd = () => {
+    setOpenField("end");
+  };
+
   const handleSelect = (next: DateRange | undefined) => {
     const nextRange = next ?? { from: undefined, to: undefined };
     onRangeChange(nextRange);
@@ -73,10 +81,16 @@ const TicketDateRange = ({
   );
 
   return (
-    <div className="flex h-[46px] w-full flex-row justify-between">
+    <div className="flex h-10 w-full flex-row justify-between">
       <Popover
         open={openField === "start"}
-        onOpenChange={(open) => (open ? setOpenField("start") : handleOpenChange(false))}
+        onOpenChange={(open) => {
+          if (open) {
+            handleOpenStart();
+            return;
+          }
+          handleOpenChange(false);
+        }}
       >
         <PopoverTrigger
           type="button"
@@ -91,7 +105,7 @@ const TicketDateRange = ({
               !range.from && "opacity-20",
             )}
           >
-            {range.from ? formatTicketDate(range.from) : "SELECT"}
+            {range.from ? formatTicketDate(range.from) : "SELECT DATE"}
           </span>
         </PopoverTrigger>
         <PopoverContent
@@ -106,7 +120,13 @@ const TicketDateRange = ({
 
       <Popover
         open={openField === "end"}
-        onOpenChange={(open) => (open ? setOpenField("end") : handleOpenChange(false))}
+        onOpenChange={(open) => {
+          if (open) {
+            handleOpenEnd();
+            return;
+          }
+          handleOpenChange(false);
+        }}
       >
         <PopoverTrigger
           type="button"
@@ -121,7 +141,7 @@ const TicketDateRange = ({
               !range.to && "opacity-20",
             )}
           >
-            {range.to ? formatTicketDate(range.to) : "SELECT"}
+            {range.to ? formatTicketDate(range.to) : "SELECT DATE"}
           </span>
         </PopoverTrigger>
         <PopoverContent
@@ -137,43 +157,50 @@ const TicketDateRange = ({
   );
 };
 
-const questTypeOptionClassName = cn(
-  "font-mono text-[11px] tracking-[1px] text-[#8A7A69] outline-none",
-  "transition-[opacity,transform] duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
+const questTypeLabelClassName = cn(
+  "font-mono leading-none tracking-[1px] transition-[color,font-size] duration-200 ease",
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
   "motion-reduce:transition-none",
 );
+
+const getQuestTypeLabelClassName = (isSelected: boolean) =>
+  cn(
+    questTypeLabelClassName,
+    isSelected ? "text-[19px] text-black" : "text-[11px] text-[#8A7A69]",
+  );
 
 const QuestTypeToggle = ({
   value,
   onChange,
 }: {
   value: QuestType | null;
-  onChange: Dispatch<SetStateAction<QuestType | null>>;
+  onChange: (value: QuestType) => void;
 }) => {
   return (
-    <div className="flex w-full flex-col items-center gap-[13px]">
-      <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">QUEST TYPE</span>
-      <div className="flex w-full flex-row justify-between gap-2">
+    <div className="flex w-full flex-col items-center gap-6">
+      <span className="font-mono text-[11px] leading-none tracking-[1px] text-[#8A7A69]">
+        QUEST TYPES
+      </span>
+      <div
+        role="radiogroup"
+        aria-label="Quest type"
+        className="flex w-full flex-row items-center justify-between gap-2"
+      >
         <button
           type="button"
-          aria-pressed={value === "solo"}
+          role="radio"
+          aria-checked={value === "solo"}
           onClick={() => onChange("solo")}
-          className={cn(
-            questTypeOptionClassName,
-            value === "solo" ? "scale-110 opacity-100" : "scale-100 opacity-60",
-          )}
+          className={getQuestTypeLabelClassName(value === "solo")}
         >
           SOLO
         </button>
         <button
           type="button"
-          aria-pressed={value === "together"}
+          role="radio"
+          aria-checked={value === "together"}
           onClick={() => onChange("together")}
-          className={cn(
-            questTypeOptionClassName,
-            value === "together" ? "scale-110 opacity-100" : "scale-100 opacity-60",
-          )}
+          className={getQuestTypeLabelClassName(value === "together")}
         >
           TOGETHER
         </button>
@@ -195,11 +222,11 @@ export const TripTicket = ({
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
   questType: QuestType | null;
-  onQuestTypeChange: Dispatch<SetStateAction<QuestType | null>>;
+  onQuestTypeChange: (value: QuestType) => void;
 }) => {
   return (
     <div className="login-rise relative flex w-[254px] max-w-full shrink-0 flex-col" aria-label="Trip ticket">
-      <div className="relative box-border flex h-[262px] w-full flex-col items-center justify-end gap-6 overflow-hidden rounded-[25px] bg-white px-5 pb-10">
+      <div className="box-border flex h-[262px] w-full flex-col items-center justify-end gap-6 overflow-hidden rounded-[25px] bg-white pt-[61px] pr-[35px] pb-[19px] pl-5">
         <div className="flex w-full flex-col">
           <label htmlFor="trip-location" className="flex flex-col">
             <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">LOCATION</span>
@@ -218,14 +245,9 @@ export const TripTicket = ({
         </div>
 
         <TicketDateRange range={dateRange} onRangeChange={onDateRangeChange} />
-
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-6 bottom-0 z-10 border-t border-dashed border-black"
-        />
       </div>
 
-      <div className="box-border flex w-full flex-col items-center overflow-hidden rounded-[25px] bg-white px-5 py-[27px]">
+      <div className="box-border flex h-[120px] w-full flex-col items-center justify-center overflow-hidden rounded-[25px] bg-white px-5">
         <QuestTypeToggle value={questType} onChange={onQuestTypeChange} />
       </div>
     </div>

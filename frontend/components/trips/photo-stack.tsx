@@ -8,10 +8,14 @@ type PhotoStackProps = {
   destination: string;
   href: string;
   layout: PhotoStackLayout;
+  imageUrl?: string | null;
 };
 
 const polaroidClassName =
-  "bg-[#CCCCCC] border-[9px] border-solid border-white";
+  "bg-[#CCCCCC] bg-cover bg-center border-[9px] border-solid border-white";
+
+const coverStyle = (url?: string | null) =>
+  url ? { backgroundImage: `url("${url}")` } : undefined;
 
 /** Three polaroids piled like a scrapbook spread. Pencil rotates from the
  * top-left of each frame — `origin-top-left` is required so the pile sits
@@ -21,6 +25,7 @@ export const PhotoStack = ({
   destination,
   href,
   layout,
+  imageUrl,
 }: PhotoStackProps) => {
   return (
     <Link
@@ -45,6 +50,7 @@ export const PhotoStack = ({
       >
         <div
           aria-hidden="true"
+          style={coverStyle(imageUrl)}
           className={cn(
             polaroidClassName,
             "absolute left-[24.963px] z-0 h-[170px] w-[164px] origin-top-left rotate-[8.444deg]",
@@ -54,6 +60,7 @@ export const PhotoStack = ({
         />
         <div
           aria-hidden="true"
+          style={coverStyle(imageUrl)}
           className={cn(
             polaroidClassName,
             "absolute top-0 left-[170.628px] z-[1] h-[170px] w-[164px] origin-top-left rotate-[4.26deg]",
@@ -62,6 +69,7 @@ export const PhotoStack = ({
         />
         <div
           aria-hidden="true"
+          style={coverStyle(imageUrl)}
           className={cn(
             polaroidClassName,
             "absolute top-px left-[45px] z-[2] h-[197px] w-[250px]",

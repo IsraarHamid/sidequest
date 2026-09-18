@@ -40,6 +40,21 @@ function clearUserId(): void {
   }
 }
 
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+    this.name = "ApiError";
+  }
+}
+
+/** True only for a genuine auth failure — the ONLY case where a page should
+ *  send the user to /login. Transient/other errors must NOT log them out. */
+export function isAuthError(e: unknown): boolean {
+  return e instanceof ApiError && e.status === 401;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
@@ -49,7 +64,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
-    throw new Error(`API ${res.status} ${path}: ${detail}`);
+    throw new ApiError(res.status, `API ${res.status} ${path}: ${detail}`);
   }
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
@@ -140,6 +155,10 @@ export type UserPhoto = {
   photo_url: string;
   completed_at: string;
 };
+
+export type RankingCount = { category: string; count: number };
+export type Badge = { code: string; name: string; icon: string };
+export type Passport = { badges: Badge[]; missions_completed: number };
 
 // The rich plan (mission_generator.md). Loosely typed — the LLM output is nested.
 export type PlanCheckpoint = {
@@ -255,6 +274,14 @@ export const api = {
     return res.json();
   },
   myPhotos: () => request<UserPhoto[]>("/users/me/photos"),
+  passport: () => request<Passport>("/users/me/passport"),
+  rankMission: (missionId: string, category: string) =>
+    request<RankingCount[]>(`/missions/${missionId}/rankings`, {
+      method: "POST",
+      body: JSON.stringify({ category }),
+    }),
+  getRankings: (missionId: string) =>
+    request<RankingCount[]>(`/missions/${missionId}/rankings`),
   leaderboard: (tripId: string) =>
     request<LeaderboardEntry[]>(`/trips/${tripId}/leaderboard`),
   arrive: (tripId: string) =>
