@@ -1,51 +1,56 @@
-"""Hardcoded fallback mission deck.
+"""Fallback mission deck — used when the LLM is unavailable/quota-limited.
 
-Used when the AI call is unavailable or returns invalid JSON twice, so a live
-demo NEVER breaks. Missions are generic-but-fun and get assigned to players.
+Written to look hand-crafted and destination-aware so a live demo always has
+legitimate-looking missions even without an AI call.
 """
 import random
 
 RARITY_POINTS = {"common": 100, "rare": 250, "legendary": 500}
 
+# (title, description) — {dest} is filled with the trip destination.
 _SOLO = [
-    ("Order something you can't pronounce", "Bonus points if you finish it."),
-    ("Snap the most South African thing you see", "A boerie roll counts."),
-    ("Find a stranger with a better story than yours", "Ask, then report back."),
-    ("Photograph the view you'd never post", "The unglamorous one."),
-    ("Buy something from a roadside vendor", "Support the little guy."),
-    ("Learn one phrase in a local language", "Use it on the group."),
+    ("Find the best coffee in {dest}", "Track down a spot only locals rate — no chains."),
+    ("Snap {dest}'s best-kept view", "Somewhere off the tourist trail. Golden hour bonus."),
+    ("Try a dish you can't pronounce", "Order it, finish it, report back."),
+    ("Buy something from a roadside stall", "Support a small local seller."),
+    ("Find a mural or piece of street art", "Capture the local colour."),
+    ("Take a 20-minute nature detour", "A short trail, a viewpoint, or a beach."),
+    ("Get one insider tip from a local", "Ask what they'd do with a free afternoon in {dest}."),
+    ("Find the quirkiest sign on the road", "The stranger the better."),
+    ("Photograph something older than 100 years", "History hides in plain sight."),
+    ("Order the house special anywhere", "Trust the person behind the counter."),
 ]
 
 _GROUP = [
-    ("Get the whole crew in one photo — no selfies", "Ask a stranger to take it."),
-    ("Agree on the trip's official theme song", "It must be played at the next stop."),
-    ("Find a spot none of you have ever been", "Prove it with a photo."),
+    ("Crew dish of the day", "Everyone tastes something new, then vote a winner before sunset."),
+    ("One photo, whole crew, no selfies", "Ask a friendly stranger to take it."),
+    ("Find a spot none of you have been", "Somewhere new to all of you — prove it with a photo."),
 ]
 
 _SECRET = [
-    ("Secretly get {target} to say 'shame' three times", None),
-    ("Convince {target} to try the weirdest item on the menu", None),
-    ("Get {target} to take a photo they didn't want to take", None),
-    ("Make {target} laugh so hard they snort", None),
+    "Secretly get {target} to say 'lekker' three times",
+    "Convince {target} to order the weirdest thing on the menu",
+    "Get {target} to pose for a photo they'll pretend to hate",
+    "Make {target} laugh so hard they snort",
+    "Get {target} to talk to a stranger for 2 minutes",
 ]
 
 
 def build_fallback_missions(trip: dict, players: list[dict], counts: dict,
                             places: list[dict] | None = None) -> list[dict]:
+    dest = trip.get("destination") or trip.get("origin") or "the area"
     out: list[dict] = []
     solo_n = counts.get("solo_per_player", 2)
     secret_n = counts.get("secret_per_player", 1)
     places = places or []
 
     for p in players:
-        picks = random.sample(_SOLO, min(solo_n, len(_SOLO)))
-        for title, desc in picks:
-            # ~1 in 4 missions is a timed "flash" challenge; the rest are untimed.
+        for title, desc in random.sample(_SOLO, min(solo_n, len(_SOLO))):
             timed = random.random() < 0.25
             out.append({
                 "assignee_user_id": p["id"],
-                "title": ("⚡ " + title) if timed else title,
-                "description": desc,
+                "title": ("⚡ " + title.format(dest=dest)) if timed else title.format(dest=dest),
+                "description": desc.format(dest=dest),
                 "type": "solo",
                 "rarity": "rare" if timed else "common",
                 "points": RARITY_POINTS["rare"] if timed else RARITY_POINTS["common"],
@@ -53,38 +58,35 @@ def build_fallback_missions(trip: dict, players: list[dict], counts: dict,
                 "time_limit_minutes": random.choice([15, 30]) if timed else None,
                 "generated_by": "fallback",
             })
-        # secret mission targeting another player
         others = [o for o in players if o["id"] != p["id"]]
         if others and secret_n:
             target = random.choice(others)
-            title, _ = random.choice(_SECRET)
             out.append({
                 "assignee_user_id": p["id"],
-                "title": title.format(target=target["name"]),
+                "title": random.choice(_SECRET).format(target=target["name"]),
+                "description": "Only you can see this. Pull it off without them noticing.",
                 "type": "secret", "rarity": "rare",
                 "points": RARITY_POINTS["rare"], "is_secret": True,
-                "generated_by": "fallback",
+                "time_limit_minutes": None, "generated_by": "fallback",
             })
 
-    # one group mission
     title, desc = random.choice(_GROUP)
     out.append({
         "assignee_user_id": None,
-        "title": title, "description": desc,
+        "title": title.format(dest=dest), "description": desc.format(dest=dest),
         "type": "group", "rarity": "legendary",
         "points": RARITY_POINTS["legendary"], "is_secret": False,
-        "generated_by": "fallback",
+        "time_limit_minutes": None, "generated_by": "fallback",
     })
 
-    # real-place checkpoint missions (from Gemini Maps grounding, if available)
     for place, player in zip(places[:2], players):
         out.append({
             "assignee_user_id": player["id"],
             "title": f"Check in at {place['name']}",
-            "description": place.get("category") or "A real local spot on your route.",
+            "description": place.get("category") or f"A real local spot near {dest}.",
             "type": "solo", "rarity": "common",
             "points": RARITY_POINTS["common"], "is_secret": False,
-            "business_name": place["name"],
+            "time_limit_minutes": None, "business_name": place["name"],
             "generated_by": "fallback",
         })
     return out

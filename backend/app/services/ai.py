@@ -121,8 +121,26 @@ def _call_claude(trip: dict, players: list[dict], counts: dict,
         messages=[{"role": "user",
                    "content": _build_user_prompt(trip, players, counts, places)}],
     )
-    # Concatenate text blocks
     return "".join(block.text for block in msg.content if block.type == "text")
+
+
+def _call_gemini(trip: dict, players: list[dict], counts: dict,
+                 places: list[dict] | None) -> str:
+    from google import genai
+    from google.genai import types
+
+    settings = get_settings()
+    client = genai.Client(api_key=settings.gemini_api_key,
+                          http_options=types.HttpOptions(timeout=60000))
+    resp = client.models.generate_content(
+        model=settings.gemini_model,
+        contents=_build_user_prompt(trip, players, counts, places),
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            response_mime_type="application/json",
+        ),
+    )
+    return getattr(resp, "text", "")
 
 
 def generate_missions(trip: dict, players: list[dict],
@@ -130,19 +148,25 @@ def generate_missions(trip: dict, players: list[dict],
                       places: list[dict] | None = None) -> list[dict]:
     """players: [{"id", "name", "preferences": {...}}, ...]
     places: optional real businesses (from services.places) to base missions at.
+    Uses Claude if keyed, else Gemini, else the fallback deck. Any failure ->
+    fallback so a live demo never breaks.
     """
     counts = counts or {"solo_per_player": 2, "group": 1, "secret_per_player": 1}
     settings = get_settings()
 
-    if not settings.ai_enabled:
-        return _apply_timers(build_fallback_missions(trip, players, counts, places))
+    providers = []
+    if settings.ai_enabled:
+        providers.append(("claude", _call_claude))
+    if settings.gemini_api_key:
+        providers.append(("gemini", _call_gemini))
 
-    for attempt in range(2):  # try once, retry once
-        try:
-            raw = _call_claude(trip, players, counts, places)
-            return _apply_timers(_parse_and_map(raw, players))
-        except Exception as exc:  # noqa: BLE001 - demo safety net
-            print(f"[ai] mission generation attempt {attempt + 1} failed: {exc}")
+    for name, fn in providers:
+        for attempt in range(2):  # try once, retry once
+            try:
+                raw = fn(trip, players, counts, places)
+                return _apply_timers(_parse_and_map(raw, players))
+            except Exception as exc:  # noqa: BLE001 - demo safety net
+                print(f"[ai] {name} attempt {attempt + 1} failed: {exc}")
 
     print("[ai] falling back to hardcoded mission deck")
     return _apply_timers(build_fallback_missions(trip, players, counts, places))

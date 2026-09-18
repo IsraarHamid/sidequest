@@ -214,6 +214,20 @@ what's active.
 See [`DEPLOY.md`](DEPLOY.md) — free options (Render recommended; Fly.io / Cloud
 Run / Vercel) with step-by-step guides and secret-safety notes.
 
+## Demo prep
+
+Seed a realistic, populated demo (trip + crew + completed missions with photos +
+points + badges) so the boards look alive on stage:
+```bash
+cd backend && source .venv/bin/activate
+python scripts/seed_demo.py     # backend must be running; uses ADMIN_* + Supabase
+```
+Then sign in as the admin to see the "Garden Route Crew" trip fully populated.
+
+**Missions** come from Claude if `ANTHROPIC_API_KEY` is set, else **Gemini**, else a
+destination-aware fallback deck (so a live demo always has legitimate-looking
+missions even if the LLM is rate-limited).
+
 ## Notes
 
 - **Persistence:** **Supabase** when `SUPABASE_URL` + service key are set (the
