@@ -37,12 +37,14 @@ def _id() -> str:
     return str(uuid.uuid4())
 
 
-# Unambiguous alphabet — no O/0, I/1/L to avoid mistyped join codes.
-_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+# Numeric-only join codes so mobile users get a numpad. 5 digits, leading
+# zeros allowed (kept as a string) — e.g. "04829".
+_CODE_ALPHABET = "0123456789"
+_CODE_LENGTH = 5
 
 
 def _join_code() -> str:
-    return "".join(random.choices(_CODE_ALPHABET, k=6))
+    return "".join(random.choices(_CODE_ALPHABET, k=_CODE_LENGTH))
 
 
 _AVATAR_COLORS = ["#E85A1C", "#3E6B4A", "#E87FA8", "#7FB8E0", "#C8901A", "#D0392F"]

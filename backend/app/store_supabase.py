@@ -22,12 +22,26 @@ def _id() -> str:
     return str(uuid.uuid4())
 
 
-# Unambiguous alphabet — no O/0, I/1/L to avoid mistyped join codes.
-_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+# Numeric-only join codes so mobile users get a numpad. 5 digits, leading
+# zeros allowed (kept as a string) — e.g. "04829".
+_CODE_ALPHABET = "0123456789"
+_CODE_LENGTH = 5
 
 
 def _join_code() -> str:
-    return "".join(random.choices(_CODE_ALPHABET, k=6))
+    return "".join(random.choices(_CODE_ALPHABET, k=_CODE_LENGTH))
+
+
+def _unique_join_code(attempts: int = 20) -> str:
+    """A 5-digit code not already in use. The space is only 100k, so check for
+    collisions instead of trusting randomness."""
+    for _ in range(attempts):
+        code = _join_code()
+        existing = (_sb().table("trips").select("id")
+                    .eq("join_code", code).limit(1).execute())
+        if not (existing.data or []):
+            return code
+    return _join_code()  # extremely unlikely; accept a tiny collision risk
 
 
 def _initials(name: str) -> str:
@@ -129,7 +143,7 @@ def create_trip(created_by: str, data: dict) -> dict:
         "destination": data.get("destination"),
         "vibe": data.get("vibe"),
         "status": "draft",
-        "join_code": _join_code(),
+        "join_code": _unique_join_code(),
         "created_by": created_by,
         "start_date": data.get("start_date"),
         "end_date": data.get("end_date"),
