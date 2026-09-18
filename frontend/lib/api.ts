@@ -141,6 +141,10 @@ export type UserPhoto = {
   completed_at: string;
 };
 
+export type RankingCount = { category: string; count: number };
+export type Badge = { code: string; name: string; icon: string };
+export type Passport = { badges: Badge[]; missions_completed: number };
+
 // The rich plan (mission_generator.md). Loosely typed — the LLM output is nested.
 export type PlanCheckpoint = {
   leg_number: number;
@@ -255,6 +259,14 @@ export const api = {
     return res.json();
   },
   myPhotos: () => request<UserPhoto[]>("/users/me/photos"),
+  passport: () => request<Passport>("/users/me/passport"),
+  rankMission: (missionId: string, category: string) =>
+    request<RankingCount[]>(`/missions/${missionId}/rankings`, {
+      method: "POST",
+      body: JSON.stringify({ category }),
+    }),
+  getRankings: (missionId: string) =>
+    request<RankingCount[]>(`/missions/${missionId}/rankings`),
   leaderboard: (tripId: string) =>
     request<LeaderboardEntry[]>(`/trips/${tripId}/leaderboard`),
   arrive: (tripId: string) =>
