@@ -1,4 +1,4 @@
-"""TRIP QUEST backend — FastAPI entrypoint.
+"""SideQuest backend — FastAPI entrypoint.
 
 Run locally:
     cd backend
@@ -18,7 +18,7 @@ from app.routers import missions, trips, users
 settings = get_settings()
 
 app = FastAPI(
-    title="TRIP QUEST API",
+    title="SideQuest API",
     version="0.1.0",
     description="Multiplayer travel game — AI-generated missions between START and ARRIVED.",
 )

@@ -1,6 +1,6 @@
-# TRIP QUEST — Backend
+# SideQuest — Backend
 
-FastAPI backend for TRIP QUEST. See [`../BACKEND.md`](../BACKEND.md) for the full
+FastAPI backend for SideQuest. See [`../BACKEND.md`](../BACKEND.md) for the full
 architecture and contracts, and [`../DATABASE.md`](../DATABASE.md) for the schema.
 
 ## Run locally (no keys required for first run)

@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 from app.config import get_settings
 from app.data.fallback_missions import RARITY_POINTS, build_fallback_missions
 
-SYSTEM_PROMPT = """You are the game master for TRIP QUEST, a multiplayer travel game.
+SYSTEM_PROMPT = """You are the game master for SideQuest, a multiplayer travel game.
 You generate playful "missions" players complete during a road trip / journey.
 
 Rules:
