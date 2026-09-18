@@ -13,6 +13,7 @@ import uuid
 
 from app.config import get_settings
 from app.db import get_supabase
+from app.services.images import compress_image
 
 _EXT = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png",
         "image/webp": "webp", "image/heic": "heic", "image/gif": "gif"}
@@ -45,11 +46,15 @@ def upload_mission_photo(user_id: str, trip_id: str, mission_id: str,
     bucket = get_settings().storage_bucket
     _ensure_bucket(sb, bucket)
 
-    ext = _EXT.get((content_type or "").lower(), "jpg")
+    # Compress before storing (keeps us well under the 50 MB/file + 1 GB limits).
+    data, comp_ext, comp_ct = compress_image(data, content_type)
+    content_type = comp_ct or content_type
+    ext = comp_ext or _EXT.get((content_type or "").lower(), "jpg")
+
     path = f"{user_id}/{trip_id}/{mission_id}/{uuid.uuid4().hex}.{ext}"
     sb.storage.from_(bucket).upload(
         path, data,
         {"content-type": content_type or "image/jpeg", "upsert": "true"},
     )
     public = sb.storage.from_(bucket).get_public_url(path)
-    return {"path": path, "url": public}
+    return {"path": path, "url": public, "bytes": len(data)}

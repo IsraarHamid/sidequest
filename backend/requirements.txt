@@ -7,3 +7,4 @@ supabase>=2.5
 anthropic>=0.34
 google-genai>=1.0
 python-multipart>=0.0.9
+Pillow>=10.3
