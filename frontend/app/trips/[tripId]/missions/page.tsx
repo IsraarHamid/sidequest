@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Flame } from "lucide-react";
 import { BottomNav } from "@/components/trip-quest/bottom-nav";
 import { MissionCard } from "@/components/trip-quest/mission-card";
-import { api, type Mission as ApiMission, type Trip } from "@/lib/api";
+import { api, isAuthError, type Mission as ApiMission, type Trip } from "@/lib/api";
 import type { Mission as CardMission } from "@/lib/trip-quest-data";
 
 function toCard(m: ApiMission, tripId: string): CardMission {
@@ -44,8 +44,9 @@ export default function MissionsListPage() {
       const [t, ms] = await Promise.all([api.getTrip(tripId), api.listMissions(tripId)]);
       setTrip(t);
       setMissions(ms);
-    } catch {
-      router.replace("/login");
+    } catch (e) {
+      if (isAuthError(e)) router.replace("/login");
+      else setError("Couldn't load missions. Is the backend running?");
     } finally {
       setLoading(false);
     }

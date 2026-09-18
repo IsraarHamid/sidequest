@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Camera, Laugh, Plus, Sparkles, Trophy, type LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/trip-quest/page-header";
-import { api, type Mission, type RankingCount } from "@/lib/api";
+import { api, isAuthError, type Mission, type RankingCount } from "@/lib/api";
 
 const CATEGORIES: { id: string; label: string; icon: LucideIcon; color: string }[] = [
   { id: "funniest", label: "Funniest", icon: Laugh, color: "#E85A1C" },
@@ -26,8 +26,8 @@ export default function VoteMissionPage() {
         const [all, ranks] = await Promise.all([api.listMissions(tripId), api.getRankings(missionId)]);
         setMission(all.find((m) => m.id === missionId) ?? null);
         setCounts(Object.fromEntries(ranks.map((r: RankingCount) => [r.category, r.count])));
-      } catch {
-        router.replace("/login");
+      } catch (e) {
+        if (isAuthError(e)) router.replace("/login");
       }
     })();
   }, [tripId, missionId, router]);

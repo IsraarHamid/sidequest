@@ -57,7 +57,7 @@ export const TripsDashboard = () => {
               label={`Open ${user.display_name}'s menu`}
               profileHref="/login"
               preferencesHref="/login"
-              logoutHref="/login"
+              logoutHref="/login?logout=1"
             />
 
             <div className="box-border flex h-fit flex-1 flex-row items-center justify-end gap-3">
