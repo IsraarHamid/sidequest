@@ -14,6 +14,8 @@ import string
 import uuid
 from datetime import datetime, timezone
 
+from app.security import hash_password
+
 # Simple dict "tables"
 users: dict[str, dict] = {}
 trips: dict[str, dict] = {}
@@ -35,21 +37,63 @@ def _join_code() -> str:
     return "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 
-# ---- Users ----
-def create_user(display_name: str) -> dict:
+_AVATAR_COLORS = ["#E85A1C", "#3E6B4A", "#E87FA8", "#7FB8E0", "#C8901A", "#D0392F"]
+
+
+def _initials(name: str) -> str:
+    parts = [p for p in (name or "").split() if p]
+    if not parts:
+        return "SQ"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
+
+
+def _avatar_color(seed: str) -> str:
+    return _AVATAR_COLORS[hash(seed) % len(_AVATAR_COLORS)]
+
+
+def _new_user(display_name: str, *, email=None, password=None,
+              auth_provider="anonymous", google_id=None, is_admin=False) -> dict:
     uid = _id()
     users[uid] = {
         "id": uid,
         "display_name": display_name or "Player",
+        "email": email,
+        "password_hash": hash_password(password) if password else None,
+        "auth_provider": auth_provider,        # anonymous | email | google
+        "google_id": google_id,
+        "is_admin": is_admin,
         "avatar_url": None,
+        "avatar_color": _avatar_color(uid),
+        "initials": _initials(display_name),
+        "created_at": _now(),
         "preferences": {"interests": [], "diet": None, "adventure_level": None,
                         "budget": None, "free_text": None},
     }
     return users[uid]
 
 
+# ---- Users ----
+def create_user(display_name: str) -> dict:
+    """Anonymous user (frictionless demo sign-in)."""
+    return _new_user(display_name)
+
+
+def create_email_user(display_name: str, email: str, password: str,
+                      is_admin: bool = False) -> dict:
+    return _new_user(display_name, email=email, password=password,
+                     auth_provider="email", is_admin=is_admin)
+
+
 def get_user(user_id: str) -> dict | None:
     return users.get(user_id)
+
+
+def get_user_by_email(email: str) -> dict | None:
+    email = (email or "").strip().lower()
+    return next((u for u in users.values()
+                 if (u.get("email") or "").lower() == email), None)
 
 
 def set_preferences(user_id: str, prefs: dict) -> dict:
@@ -69,6 +113,8 @@ def create_trip(created_by: str, data: dict) -> dict:
         "status": "draft",
         "join_code": _join_code(),
         "created_by": created_by,
+        "start_date": data.get("start_date"),
+        "end_date": data.get("end_date"),
         "ends_at": data.get("ends_at"),
     }
     trips[tid] = trip
@@ -80,9 +126,22 @@ def create_trip(created_by: str, data: dict) -> dict:
 def _add_member(trip_id: str, user_id: str, role: str) -> dict:
     user = users[user_id]
     member = {"user_id": user_id, "display_name": user["display_name"],
-              "role": role, "total_points": 0}
+              "role": role, "total_points": 0,
+              "avatar_color": user.get("avatar_color"),
+              "initials": user.get("initials")}
     members[trip_id].append(member)
     return member
+
+
+def list_trips_for_user(user_id: str) -> list[dict]:
+    """Trips where this user is a member (host or player)."""
+    out = []
+    for tid, ms in members.items():
+        if any(m["user_id"] == user_id for m in ms):
+            trip = trips.get(tid)
+            if trip:
+                out.append({**trip, "members": ms})
+    return out
 
 
 def join_trip(join_code: str, user_id: str) -> dict | None:
@@ -208,3 +267,18 @@ def leaderboard(trip_id: str) -> list[dict]:
     ms = sorted(get_members(trip_id), key=lambda m: m["total_points"], reverse=True)
     return [{"user_id": m["user_id"], "display_name": m["display_name"],
              "total_points": m["total_points"]} for m in ms]
+
+
+# ---- Seed data ----
+def _seed() -> None:
+    """Seed the admin override user (bypass while Google sign-in is in dev)."""
+    if not get_user_by_email("betterbash@gmail.com"):
+        create_email_user(
+            display_name="Better Bash",
+            email="betterbash@gmail.com",
+            password="betterbash",
+            is_admin=True,
+        )
+
+
+_seed()

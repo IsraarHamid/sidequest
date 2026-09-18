@@ -32,6 +32,14 @@ function setUserId(id: string): void {
   }
 }
 
+function clearUserId(): void {
+  try {
+    window.localStorage.removeItem(USER_ID_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
@@ -58,7 +66,12 @@ export type Preferences = {
 export type User = {
   id: string;
   display_name: string;
+  email?: string | null;
+  is_admin: boolean;
+  auth_provider: "anonymous" | "email" | "google";
   avatar_url?: string | null;
+  avatar_color?: string | null;
+  initials?: string | null;
   preferences: Preferences;
 };
 
@@ -67,6 +80,8 @@ export type Member = {
   display_name: string;
   role: "host" | "player";
   total_points: number;
+  avatar_color?: string | null;
+  initials?: string | null;
 };
 
 export type Trip = {
@@ -78,6 +93,8 @@ export type Trip = {
   status: "draft" | "active" | "arrived" | "ended";
   join_code: string;
   created_by: string;
+  start_date?: string | null;
+  end_date?: string | null;
   ends_at?: string | null;
   members: Member[];
 };
@@ -149,7 +166,27 @@ export const api = {
     setUserId(user.id);
     return user;
   },
+  async login(email: string, password: string): Promise<User> {
+    const user = await request<User>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    setUserId(user.id);
+    return user;
+  },
+  async register(displayName: string, email: string, password: string): Promise<User> {
+    const user = await request<User>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ display_name: displayName, email, password }),
+    });
+    setUserId(user.id);
+    return user;
+  },
+  // Google sign-in is in development — this will throw (501) until it's wired.
+  googleSignIn: () => request<User>("/auth/google", { method: "POST" }),
+  logout: () => clearUserId(),
   me: () => request<User>("/users/me"),
+  myTrips: () => request<Trip[]>("/trips"),
   setPreferences: (prefs: Preferences) =>
     request<User>("/users/me/preferences", {
       method: "PUT",

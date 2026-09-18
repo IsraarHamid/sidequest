@@ -24,12 +24,28 @@ class Preferences(BaseModel):
 class UserOut(BaseModel):
     id: str
     display_name: str
+    email: Optional[str] = None
+    is_admin: bool = False
+    auth_provider: str = "anonymous"
     avatar_url: Optional[str] = None
+    avatar_color: Optional[str] = None
+    initials: Optional[str] = None
     preferences: Preferences = Field(default_factory=Preferences)
 
 
 class AnonIn(BaseModel):
     display_name: str = "Player"
+
+
+class LoginIn(BaseModel):
+    email: str
+    password: str
+
+
+class RegisterIn(BaseModel):
+    display_name: str
+    email: str
+    password: str
 
 
 # ---- Trips ----
@@ -38,6 +54,8 @@ class TripCreate(BaseModel):
     origin: Optional[str] = None
     destination: Optional[str] = None
     vibe: Optional[str] = None
+    start_date: Optional[str] = None    # e.g. "2026-10-12" (display + planning)
+    end_date: Optional[str] = None
     ends_at: Optional[datetime] = None  # optional overall trip countdown
 
 
@@ -46,6 +64,8 @@ class MemberOut(BaseModel):
     display_name: str
     role: Literal["host", "player"]
     total_points: int = 0
+    avatar_color: Optional[str] = None
+    initials: Optional[str] = None
 
 
 class TripOut(BaseModel):
@@ -57,6 +77,8 @@ class TripOut(BaseModel):
     status: TripStatus
     join_code: str
     created_by: str
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     ends_at: Optional[datetime] = None  # optional overall trip countdown
     members: list[MemberOut] = Field(default_factory=list)
 

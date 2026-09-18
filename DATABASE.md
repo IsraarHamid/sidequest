@@ -57,10 +57,15 @@ erDiagram
 
     users {
         uuid id PK
-        text email
+        text email UK
         text display_name
+        text password_hash
+        enum auth_provider
+        text google_id UK
+        bool is_admin
         text avatar_url
-        bool is_anonymous
+        text avatar_color
+        text initials
         timestamptz created_at
     }
     user_preferences {
@@ -80,6 +85,8 @@ erDiagram
         trip_status status
         text join_code UK
         uuid created_by FK
+        date start_date
+        date end_date
         timestamptz start_time
         timestamptz ends_at
         timestamptz created_at
@@ -190,7 +197,7 @@ erDiagram
 
 | Table | Tier | Purpose |
 |---|---|---|
-| `users` | 🟢 | Accounts (incl. anonymous for the demo). |
+| `users` | 🟢 | Accounts: anonymous, email+password (incl. admin override), Google (in dev). Holds avatar color/initials. |
 | `user_preferences` | 🟢 | Feeds the AI mission engine. |
 | `trips` | 🟢 | A group + game instance (one per trip). Has a `join_code`. |
 | `trip_members` | 🟢 | Who's in a trip + their running score. |
@@ -220,17 +227,26 @@ create type member_role     as enum ('host', 'player');
 create type mission_type    as enum ('solo', 'group', 'secret');
 create type mission_rarity  as enum ('common', 'rare', 'legendary');
 create type mission_status  as enum ('open', 'completed');
+create type auth_provider   as enum ('anonymous', 'email', 'google');
 
 -- ========== 🟢 MVP ==========
 
 create table users (
-    id            uuid primary key default gen_random_uuid(),
-    email         text unique,
-    display_name  text not null default 'Player',
-    avatar_url    text,
-    is_anonymous  boolean not null default true,
-    created_at    timestamptz not null default now()
+    id             uuid primary key default gen_random_uuid(),
+    email          text unique,                         -- null for anonymous users
+    display_name   text not null default 'Player',
+    password_hash  text,                                -- null unless email auth (PBKDF2)
+    auth_provider  auth_provider not null default 'anonymous',
+    google_id      text unique,                         -- set for Google sign-in (in dev)
+    is_admin       boolean not null default false,      -- admin override account
+    avatar_url     text,
+    avatar_color   text,                                -- hex used for stamp/avatar UI
+    initials       text,                                -- e.g. "BB" for the avatar
+    created_at     timestamptz not null default now()
 );
+-- Auth model: anonymous (frictionless demo), email+password (incl. the admin
+-- override betterbash@gmail.com — see §8 seed), and Google (in development).
+-- Real secrets/hashes live server-side only; never returned to the client.
 
 create table user_preferences (
     user_id          uuid primary key references users(id) on delete cascade,
@@ -250,6 +266,8 @@ create table trips (
     status       trip_status not null default 'draft',
     join_code    text unique not null,
     created_by   uuid not null references users(id) on delete cascade,
+    start_date   date,          -- trip window (shown on the dashboard cards)
+    end_date     date,
     start_time   timestamptz,
     ends_at      timestamptz,   -- optional overall trip countdown (design: countdown timer)
     created_at   timestamptz not null default now()
@@ -448,11 +466,21 @@ production posture, enable RLS with policies like:
 
 ---
 
-## 8. Seed data suggestion (for a lively demo)
+## 8. Seed data
 
-Pre-insert a few `businesses` (real SA spots on your demo route) and a handful of
-`badges` (`first_mission`, `five_missions`, `group_complete`, `first_to_finish`)
-so the passport and business-tagging story look real on stage.
+**Admin override user (required).** While Google sign-in is in development, seed an
+admin account so the app can be used without OAuth:
+
+- `email` = `betterbash@gmail.com`, `password` = `betterbash` (stored **hashed**),
+  `auth_provider = 'email'`, `is_admin = true`, `display_name = 'Better Bash'`.
+
+The backend seeds this automatically (`store._seed()` today; a Supabase migration/
+seed when wired). Never commit the plaintext beyond this documented demo credential.
+
+**For a lively demo**, also pre-insert a few `businesses` (real SA spots on your
+demo route) and a handful of `badges` (`first_mission`, `five_missions`,
+`group_complete`, `first_to_finish`) so the passport and business-tagging story
+look real on stage.
 
 ---
 

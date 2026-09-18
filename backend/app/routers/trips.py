@@ -16,6 +16,12 @@ def _trip_out(trip: dict) -> dict:
     return {**trip, "members": store.get_members(trip["id"])}
 
 
+@router.get("", response_model=list[TripOut])
+def my_trips(current=Depends(get_current_user)):
+    """All trips the current user belongs to (for the dashboard)."""
+    return store.list_trips_for_user(current["id"])
+
+
 @router.post("", response_model=TripOut)
 def create_trip(body: TripCreate, current=Depends(get_current_user)):
     trip = store.create_trip(current["id"], body.model_dump())

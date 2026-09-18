@@ -139,8 +139,14 @@ Not exhaustive — a shared starting point. All return JSON; auth via `Authoriza
 
 **Auth / users**
 - `POST /auth/anon` — anonymous session (fast join for demo)
-- `GET /users/me` — current user
+- `POST /auth/login` — email + password (admin override: `betterbash@gmail.com` / `betterbash`)
+- `POST /auth/register` — email + password sign-up
+- `POST /auth/google` — Google sign-in (**501 — in development**; use the override)
+- `GET /users/me` — current user (includes `is_admin`, `avatar_color`, `initials`)
 - `PUT /users/me/preferences` — set preferences
+
+**Trips**
+- `GET /trips` — trips the current user belongs to (dashboard)
 
 **Trips (groups)**
 - `POST /trips` — create trip → returns `join_code`

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app import store
 from app.deps import get_current_user
-from app.models import AnonIn, Preferences, UserOut
+from app.models import AnonIn, LoginIn, Preferences, RegisterIn, UserOut
+from app.security import verify_password
 
 router = APIRouter(tags=["users"])
 
@@ -10,8 +11,37 @@ router = APIRouter(tags=["users"])
 @router.post("/auth/anon", response_model=UserOut)
 def create_anon_user(body: AnonIn):
     """Frictionless sign-in for the demo. Returns a user; use its id as X-User-Id."""
-    user = store.create_user(body.display_name)
+    return store.create_user(body.display_name)
+
+
+@router.post("/auth/login", response_model=UserOut)
+def login(body: LoginIn):
+    """Email + password login. Used for the admin override
+    (betterbash@gmail.com / betterbash) while Google sign-in is in development."""
+    user = store.get_user_by_email(body.email)
+    if not user or not user.get("password_hash") or \
+            not verify_password(body.password, user["password_hash"]):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Invalid email or password")
     return user
+
+
+@router.post("/auth/register", response_model=UserOut)
+def register(body: RegisterIn):
+    """Email + password registration."""
+    if store.get_user_by_email(body.email):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="An account with that email already exists")
+    return store.create_email_user(body.display_name, body.email, body.password)
+
+
+@router.post("/auth/google")
+def google_sign_in():
+    """Google sign-in — IN DEVELOPMENT. Use the admin override (/auth/login) for now."""
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Google sign-in is still in development. Use the admin override login.",
+    )
 
 
 @router.get("/users/me", response_model=UserOut)
