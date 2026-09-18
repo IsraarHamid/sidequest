@@ -1,4 +1,4 @@
-# TRIP QUEST — Database Architecture & Schema
+# SideQuest — Database Architecture & Schema
 
 > **Purpose:** The single reference for our database design. It supports the
 > **entire project** (MVP + later features) so we can build the backend DB

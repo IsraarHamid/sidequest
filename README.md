@@ -1,4 +1,4 @@
-# TRIP QUEST
+# SideQuest
 
 Every journey generates a temporary multiplayer game. The product exists entirely between START → ARRIVED.
 

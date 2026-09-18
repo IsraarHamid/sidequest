@@ -1,4 +1,4 @@
-# TRIP QUEST — Backend Guide
+# SideQuest — Backend Guide
 
 > **Purpose of this file:** Single source of truth for anyone (human teammate or AI agent) working on the **backend**. It defines *what we're building*, *how the backend is shaped*, and *the contracts everyone codes against*. It is intentionally **stack-flexible** — the concepts (entities, endpoints, AI contract) stay stable even if we swap a specific technology. If you change a decision here, **update this file in the same PR.**
 
