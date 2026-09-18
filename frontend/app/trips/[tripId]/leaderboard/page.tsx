@@ -6,7 +6,7 @@ import { Medal } from "lucide-react";
 import { BottomNav } from "@/components/trip-quest/bottom-nav";
 import { RankTabs } from "@/components/trip-quest/rank-tabs";
 import { Avatar } from "@/components/trip-quest/avatar";
-import { api, type LeaderboardEntry, type Trip } from "@/lib/api";
+import { api, isAuthError, type LeaderboardEntry, type Trip } from "@/lib/api";
 
 const COLORS = ["#E85A1C", "#3E6B4A", "#E87FA8", "#7FB8E0", "#C8901A", "#D0392F"];
 
@@ -30,8 +30,8 @@ export default function LeaderboardPage() {
         const [lb, t] = await Promise.all([api.leaderboard(tripId), api.getTrip(tripId)]);
         setRows(lb);
         setTrip(t);
-      } catch {
-        router.replace("/login");
+      } catch (e) {
+        if (isAuthError(e)) router.replace("/login");
       } finally {
         setLoading(false);
       }

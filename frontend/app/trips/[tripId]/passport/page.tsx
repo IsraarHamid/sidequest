@@ -8,7 +8,7 @@ import {
 import { BottomNav } from "@/components/trip-quest/bottom-nav";
 import { RankTabs } from "@/components/trip-quest/rank-tabs";
 import { Avatar } from "@/components/trip-quest/avatar";
-import { api, type Badge, type Trip, type User, type UserPhoto } from "@/lib/api";
+import { api, isAuthError, type Badge, type Trip, type User, type UserPhoto } from "@/lib/api";
 
 const BADGE_ICONS: Record<string, LucideIcon> = { Utensils, Camera, Zap, Users, MoonStar };
 
@@ -31,8 +31,8 @@ export default function PassportPage() {
         setUser(me); setTrips(myTrips);
         setBadges(pass.badges); setMissionsDone(pass.missions_completed);
         setPhotos(myPhotos);
-      } catch {
-        router.replace("/login");
+      } catch (e) {
+        if (isAuthError(e)) router.replace("/login");
       } finally {
         setLoading(false);
       }

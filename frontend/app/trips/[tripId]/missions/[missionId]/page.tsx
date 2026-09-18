@@ -7,7 +7,7 @@ import {
   User, Users, Utensils, type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/trip-quest/page-header";
-import { api, type Mission } from "@/lib/api";
+import { api, isAuthError, type Mission } from "@/lib/api";
 
 const ICON: Record<string, LucideIcon> = { Utensils, Camera, Users, Landmark };
 
@@ -30,8 +30,8 @@ export default function MissionDetailPage() {
       try {
         const all = await api.listMissions(tripId);
         setMission(all.find((m) => m.id === missionId) ?? null);
-      } catch {
-        router.replace("/login");
+      } catch (e) {
+        if (isAuthError(e)) router.replace("/login");
       } finally {
         setLoading(false);
       }
