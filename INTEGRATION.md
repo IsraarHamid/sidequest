@@ -73,10 +73,20 @@ CORS on the backend already allows `http://localhost:3000`.
 Types mirror `backend/app/models.py`. Migrating a screen = replacing its
 `trip-quest-data.ts` import with the matching `api.*` call.
 
+## Shareable join flow (wired)
+
+- **Create** (`/trips/new`): calls `ensureUser()` + `api.createTrip()`, then shows the
+  **real `join_code`** with Copy + Share-link (Web Share API → `joinLink(code)`,
+  falls back to clipboard). Continue → `/trips/{realId}/preferences`.
+- **Join** (`/trips/join`): code input prefilled from an invite link (`?code=…`),
+  `api.joinTrip(code)` → shows the real trip + members → Continue.
+- No schema change — uses the existing `trips.join_code` + `trip_members`.
+
 ## Status / next steps
 
 - ✅ Backend API + both generation paths working (validated live).
-- ✅ Frontend UI complete (mock data) + typed API client + maps links + env.
-- ⏳ **Wire screens to `lib/api.ts`** (replace mock data screen by screen).
+- ✅ Frontend UI complete + typed API client + maps links + env.
+- ✅ **Create + Join screens wired to the API** (real shareable code).
+- ⏳ Wire remaining screens (preferences, missions, leaderboard, passport) to `lib/api.ts`.
 - ⏳ Swap the in-memory store for Supabase (schema in `DATABASE.md`).
 - ⏳ Decide how much of the rich plan the UI renders vs. the simple missions.

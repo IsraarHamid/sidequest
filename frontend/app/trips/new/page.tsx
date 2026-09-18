@@ -5,12 +5,50 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Calendar, Copy, MapPin, PartyPopper, Share2, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/trip-quest/page-header";
-import { DEFAULT_TRIP_ID, getTrip } from "@/lib/trip-quest-data";
+import { api, ensureUser, joinLink } from "@/lib/api";
 
 export default function CreateTripPage() {
   const router = useRouter();
-  const [created, setCreated] = useState(false);
-  const trip = getTrip(DEFAULT_TRIP_ID);
+  const [name, setName] = useState("");
+  const [destination, setDestination] = useState("");
+  const [created, setCreated] = useState<{ id: string; join_code: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCreate() {
+    setError(null);
+    setLoading(true);
+    try {
+      await ensureUser();
+      const trip = await api.createTrip({
+        name: name.trim() || "Our trip",
+        destination: destination.trim() || undefined,
+      });
+      setCreated({ id: trip.id, join_code: trip.join_code });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create the trip.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleShare() {
+    if (!created) return;
+    const url = joinLink(created.join_code);
+    const text = `Join my SideQuest trip! Code: ${created.join_code}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "SideQuest", text, url });
+        return;
+      } catch {
+        /* user cancelled — fall through to copy */
+      }
+    }
+    await navigator.clipboard?.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
 
   return (
     <div className="min-h-svh w-full bg-[#F4EFE4]">
@@ -44,8 +82,10 @@ export default function CreateTripPage() {
                   <div className="box-border w-full h-[52px] shrink-0 flex flex-row gap-[10px] p-[0px_16px] justify-start items-center bg-[#FBF7F0] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-2xl">
                     <Sparkles className="w-[16px] h-[16px] shrink-0" color="#8A7A69" />
                     <input
-                      defaultValue={trip.name}
-                      className="text-[15px]/[normal] box-border w-full bg-transparent text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-medium text-left outline-none"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Cape Town Crew"
+                      className="text-[15px]/[normal] box-border w-full bg-transparent text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-medium text-left outline-none placeholder:text-[#B7AA97]"
                     />
                   </div>
                 </div>
@@ -56,8 +96,10 @@ export default function CreateTripPage() {
                   <div className="box-border w-full h-[52px] shrink-0 flex flex-row gap-[10px] p-[0px_16px] justify-start items-center bg-[#FBF7F0] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-2xl">
                     <MapPin className="w-[16px] h-[16px] shrink-0" color="#8A7A69" />
                     <input
-                      defaultValue={trip.destination}
-                      className="text-[15px]/[normal] box-border w-full bg-transparent text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-medium text-left outline-none"
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      placeholder="Hermanus, South Africa"
+                      className="text-[15px]/[normal] box-border w-full bg-transparent text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-medium text-left outline-none placeholder:text-[#B7AA97]"
                     />
                   </div>
                 </div>
@@ -87,13 +129,20 @@ export default function CreateTripPage() {
                 </div>
               </div>
 
+              {error && (
+                <div className="text-[13px]/[18px] box-border w-full text-[#D0392F] font-[Geist,system-ui,sans-serif] font-medium text-left">
+                  {error}
+                </div>
+              )}
+
               <button
                 type="button"
-                onClick={() => setCreated(true)}
-                className="box-border w-full h-[48px] shrink-0 flex flex-row gap-[8px] p-[16px_32px] justify-center items-center bg-[#121212] rounded-full"
+                onClick={handleCreate}
+                disabled={loading}
+                className="box-border w-full h-[48px] shrink-0 flex flex-row gap-[8px] p-[16px_32px] justify-center items-center bg-[#121212] rounded-full disabled:opacity-60"
               >
                 <div className="text-[15px]/[normal] box-border text-[#FBF7F0] font-[Geist,system-ui,sans-serif] font-semibold text-left whitespace-nowrap">
-                  Create trip
+                  {loading ? "Creating…" : "Create trip"}
                 </div>
                 <Sparkles className="w-[17px] h-[17px] shrink-0" color="#FBF7F0" />
               </button>
@@ -113,21 +162,26 @@ export default function CreateTripPage() {
                   SHARE THIS CODE WITH YOUR CREW
                 </div>
                 <div className="text-[32px]/[normal] box-border text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-extrabold tracking-[2px] text-left whitespace-nowrap relative z-10">
-                  {trip.inviteCode}
+                  {created.join_code}
                 </div>
                 <div className="box-border w-full h-fit shrink-0 flex flex-row gap-[10px] justify-start items-start relative z-10">
                   <button
                     type="button"
-                    onClick={() => navigator.clipboard?.writeText(trip.inviteCode)}
+                    onClick={() => {
+                      navigator.clipboard?.writeText(created.join_code);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1500);
+                    }}
                     className="box-border flex-1 h-[46px] flex flex-row gap-[7px] justify-center items-center bg-[#F4EFE4] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-full"
                   >
                     <Copy className="w-[15px] h-[15px] shrink-0" color="#4A3B2E" />
                     <div className="text-[13px]/[normal] box-border text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-semibold text-left whitespace-nowrap">
-                      Copy code
+                      {copied ? "Copied!" : "Copy code"}
                     </div>
                   </button>
                   <button
                     type="button"
+                    onClick={handleShare}
                     className="box-border flex-1 h-[46px] flex flex-row gap-[7px] justify-center items-center bg-[#121212] rounded-full"
                   >
                     <Share2 className="w-[15px] h-[15px] shrink-0" color="#FBF7F0" />
@@ -140,7 +194,7 @@ export default function CreateTripPage() {
 
               <button
                 type="button"
-                onClick={() => router.push(`/trips/${trip.id}/preferences`)}
+                onClick={() => router.push(`/trips/${created.id}/preferences`)}
                 className="box-border w-full h-[48px] shrink-0 flex flex-row gap-[8px] p-[16px_32px] justify-center items-center bg-[#121212] rounded-full"
               >
                 <div className="text-[15px]/[normal] box-border text-[#FBF7F0] font-[Geist,system-ui,sans-serif] font-semibold text-left whitespace-nowrap">
