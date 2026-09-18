@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { Float, PresentationControls } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
@@ -22,6 +22,10 @@ const useJournalTextures = (coverColor: string, ownerName: string) => {
   const [coverMap, setCoverMap] = useState<Texture | null>(null);
   const coverMapRef = useRef<Texture | null>(null);
   const pageEdgeMap = useMemo(() => createPageEdgeTexture(), []);
+  // ponytail: defers the 1024x1448 repaint so a dragged color picker
+  // doesn't repaint + reupload the texture on every intermediate value.
+  const deferredCoverColor = useDeferredValue(coverColor);
+  const deferredOwnerName = useDeferredValue(ownerName);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,7 +33,14 @@ const useJournalTextures = (coverColor: string, ownerName: string) => {
     const paint = async () => {
       await loadJournalFonts();
       if (cancelled) return;
-      const nextTexture = createJournalCoverTexture(coverColor, ownerName);
+      const nextTexture = await createJournalCoverTexture(
+        deferredCoverColor,
+        deferredOwnerName,
+      );
+      if (cancelled) {
+        nextTexture.dispose();
+        return;
+      }
       coverMapRef.current?.dispose();
       coverMapRef.current = nextTexture;
       setCoverMap(nextTexture);
@@ -40,7 +51,7 @@ const useJournalTextures = (coverColor: string, ownerName: string) => {
     return () => {
       cancelled = true;
     };
-  }, [coverColor, ownerName]);
+  }, [deferredCoverColor, deferredOwnerName]);
 
   useEffect(() => {
     return () => {
@@ -117,10 +128,16 @@ const JournalBook = ({
       </mesh>
 
       {coverMap ? (
-        <mesh position={[0, 0, depth / 2 + 0.0015]}>
-          <planeGeometry args={[width * 0.995, height * 0.995]} />
-          <meshBasicMaterial map={coverMap} transparent toneMapped={false} />
-        </mesh>
+        <>
+          <mesh position={[0, 0, depth / 2 + 0.0015]}>
+            <planeGeometry args={[width * 0.995, height * 0.995]} />
+            <meshBasicMaterial map={coverMap} transparent toneMapped={false} />
+          </mesh>
+          <mesh position={[0, 0, -depth / 2 - 0.0015]} rotation={[0, Math.PI, 0]}>
+            <planeGeometry args={[width * 0.995, height * 0.995]} />
+            <meshBasicMaterial map={coverMap} transparent toneMapped={false} />
+          </mesh>
+        </>
       ) : null}
     </group>
   );
