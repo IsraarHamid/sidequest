@@ -216,13 +216,19 @@ Run / Vercel) with step-by-step guides and secret-safety notes.
 
 ## Demo prep
 
-Seed a realistic, populated demo (trip + crew + completed missions with photos +
-points + badges) so the boards look alive on stage:
+Seed realistic **South-African** demo data via the real API (all in Supabase,
+photos uploaded to Storage):
 ```bash
 cd backend && source .venv/bin/activate
 python scripts/seed_demo.py     # backend must be running; uses ADMIN_* + Supabase
 ```
-Then sign in as the admin to see the "Garden Route Crew" trip fully populated.
+It creates two trips and prints their join codes:
+- **Garden Route Crew** (Cape Town → Knysna) — populated: crew, missions, completed
+  missions with uploaded photos, points, badges, votes. The admin hosts it.
+- **Kruger Safari Squad** (open) — the admin is *not* a member, so you can **test the
+  Join flow** in the UI with the printed code.
+
+Sign in as the admin to see the populated trip; use the Kruger code to test joining.
 
 **Missions** come from Claude if `ANTHROPIC_API_KEY` is set, else **Gemini**, else a
 destination-aware fallback deck (so a live demo always has legitimate-looking
