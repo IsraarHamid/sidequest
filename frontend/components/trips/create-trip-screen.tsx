@@ -15,7 +15,7 @@ import { ArrowLeft } from "lucide-react";
 import { cn } from "cn";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
-import { DEFAULT_TRIP_ID, getTrip } from "@/lib/trip-quest-data";
+import { api, ensureUser } from "@/lib/api";
 
 const GRID_COLUMNS = 35;
 const GRID_ROWS = 3;
@@ -298,10 +298,11 @@ const MixSlider = ({
 
 export const CreateTripScreen = () => {
   const router = useRouter();
-  const trip = getTrip(DEFAULT_TRIP_ID);
   const [location, setLocation] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: getToday(), to: undefined });
   const [soloColumns, setSoloColumns] = useState(DEFAULT_SOLO_COLUMNS);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLocationChange = (event: ChangeEvent<HTMLInputElement>) => {
     setLocation(event.target.value);
@@ -315,10 +316,27 @@ export const CreateTripScreen = () => {
     setSoloColumns(columns);
   };
 
-  const handleCreateTrip = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreateTrip = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!location.trim()) return;
-    router.push(`/trips/${trip.id}/preferences`);
+    const name = location.trim();
+    if (!name || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await ensureUser();
+      const fmt = (d?: Date) =>
+        d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : undefined;
+      const created = await api.createTrip({
+        name,
+        destination: name,
+        start_date: fmt(dateRange.from),
+        end_date: fmt(dateRange.to),
+      });
+      router.push(`/trips/${created.id}/preferences`);
+    } catch {
+      setError("Couldn't create the trip. Please try again.");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -397,15 +415,20 @@ export const CreateTripScreen = () => {
             />
           </div>
 
+          {error && (
+            <p className="font-sans text-[13px] font-medium text-[#D0392F]">{error}</p>
+          )}
+
           <button
             type="submit"
+            disabled={submitting}
             className={cn(
               actionClassName,
-              "bg-[#121212]",
+              "bg-[#121212] disabled:opacity-60",
               "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
             )}
           >
-            Create trip
+            {submitting ? "Creating…" : "Create trip"}
           </button>
         </div>
       </form>
