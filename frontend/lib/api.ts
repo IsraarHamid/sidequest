@@ -216,6 +216,8 @@ export const api = {
     origin?: string;
     destination?: string;
     vibe?: string;
+    start_date?: string;
+    end_date?: string;
     ends_at?: string;
   }) => request<Trip>("/trips", { method: "POST", body: JSON.stringify(body) }),
   joinTrip: (joinCode: string) =>
