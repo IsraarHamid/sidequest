@@ -1,14 +1,34 @@
 "use client";
 
-import { useState, type ChangeEvent, type FocusEvent, type FormEvent } from "react";
+import {
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+  type PointerEvent,
+  type FormEvent,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { type DateRange } from "react-day-picker";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "cn";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { DEFAULT_TRIP_ID, getTrip } from "@/lib/trip-quest-data";
 
-const DEFAULT_START_DATE = "2026-10-12";
-const DEFAULT_END_DATE = "2026-10-18";
+const GRID_COLUMNS = 35;
+const GRID_ROWS = 3;
+const DEFAULT_SOLO_COLUMNS = 15;
+const GRID_CELLS = Array.from({ length: GRID_COLUMNS * GRID_ROWS }, (_, index) => {
+  const column = index % GRID_COLUMNS;
+  const row = Math.floor(index / GRID_COLUMNS);
+  return {
+    index,
+    isBlack: (column + row) % 2 === 0,
+  };
+});
+
 const actionClassName = cn(
   "box-border flex h-12 w-full shrink-0 flex-row items-center justify-center rounded-full px-8",
   "font-sans text-[15px] font-semibold text-[#FBF7F0]",
@@ -18,78 +38,281 @@ const actionClassName = cn(
   "motion-reduce:transition-none motion-reduce:active:scale-100",
 );
 
-const formatTicketDate = (isoDate: string) => {
-  const date = new Date(`${isoDate}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return isoDate;
+const getToday = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
 
+const formatTicketDate = (date: Date) => {
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",
   }).format(date);
 };
 
-const TicketDateField = ({
-  label,
-  value,
-  min,
-  onChange,
+const dateFieldClassName = cn(
+  "flex h-full cursor-pointer flex-col gap-2 bg-transparent p-0 outline-none",
+  "transition-transform duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
+  "active:scale-[0.97]",
+  "motion-reduce:transition-none motion-reduce:active:scale-100",
+);
+
+const pickerContentClassName = cn(
+  "w-auto border-0 bg-[#F2F2ED] p-0 shadow-[0_4px_16px_0_#4A3B2E24] ring-[#DDD2C0]",
+  "origin-(--transform-origin)",
+);
+
+const snapColumnFromClientX = (clientX: number, rect: DOMRect) => {
+  if (rect.width <= 0) return 0;
+  const ratio = (clientX - rect.left) / rect.width;
+  return Math.min(GRID_COLUMNS, Math.max(0, Math.round(ratio * GRID_COLUMNS)));
+};
+
+type DateField = "start" | "end";
+
+const TicketDateRange = ({
+  range,
+  onRangeChange,
 }: {
-  label: string;
-  value: string;
-  min?: string;
-  onChange: (value: string) => void;
+  range: DateRange;
+  onRangeChange: (range: DateRange) => void;
 }) => {
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.value);
+  const [openField, setOpenField] = useState<DateField | null>(null);
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setOpenField(null);
+    }
   };
 
-  return (
-    <label className="relative flex h-full cursor-pointer flex-col gap-2">
-      <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">{label}</span>
-      <span className="font-mono text-[14px] font-medium whitespace-nowrap text-[#4A3B2E]">
-        {formatTicketDate(value)}
-      </span>
-      <input
-        type="date"
-        value={value}
-        min={min}
-        required
-        aria-label={label}
-        onChange={handleChange}
-        className="absolute inset-0 cursor-pointer opacity-0"
+  const handleOpenStart = () => {
+    setOpenField("start");
+  };
+
+  const handleOpenEnd = () => {
+    setOpenField("end");
+  };
+
+  const handleSelect = (next: DateRange | undefined) => {
+    const nextRange = next ?? { from: undefined, to: undefined };
+    onRangeChange(nextRange);
+    if (nextRange.from && nextRange.to) {
+      setOpenField(null);
+    }
+  };
+
+  const renderCalendar = () => (
+    <>
+      <PopoverTitle className="sr-only">Select trip dates</PopoverTitle>
+      <Calendar
+        mode="range"
+        selected={range}
+        onSelect={handleSelect}
+        defaultMonth={range.from ?? getToday()}
+        autoFocus
+        className="bg-[#F2F2ED] text-[#4A3B2E]"
       />
-    </label>
+    </>
+  );
+
+  return (
+    <div className="flex h-10 w-full flex-row justify-between">
+      <Popover
+        open={openField === "start"}
+        onOpenChange={(open) => {
+          if (open) {
+            handleOpenStart();
+            return;
+          }
+          handleOpenChange(false);
+        }}
+      >
+        <PopoverTrigger
+          type="button"
+          aria-label="START"
+          aria-haspopup="dialog"
+          className={dateFieldClassName}
+        >
+          <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">START</span>
+          <span
+            className={cn(
+              "font-mono text-[14px] font-medium whitespace-nowrap text-[#4A3B2E]",
+              !range.from && "opacity-20",
+            )}
+          >
+            {range.from ? formatTicketDate(range.from) : "SELECT DATE"}
+          </span>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          side="bottom"
+          sideOffset={8}
+          className={cn(pickerContentClassName, "origin-top-left")}
+        >
+          {renderCalendar()}
+        </PopoverContent>
+      </Popover>
+
+      <Popover
+        open={openField === "end"}
+        onOpenChange={(open) => {
+          if (open) {
+            handleOpenEnd();
+            return;
+          }
+          handleOpenChange(false);
+        }}
+      >
+        <PopoverTrigger
+          type="button"
+          aria-label="END"
+          aria-haspopup="dialog"
+          className={cn(dateFieldClassName, "items-end text-right")}
+        >
+          <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">END</span>
+          <span
+            className={cn(
+              "font-mono text-[14px] font-medium whitespace-nowrap text-[#4A3B2E]",
+              !range.to && "opacity-20",
+            )}
+          >
+            {range.to ? formatTicketDate(range.to) : "SELECT DATE"}
+          </span>
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          side="bottom"
+          sideOffset={8}
+          className={cn(pickerContentClassName, "origin-top-right")}
+        >
+          {renderCalendar()}
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
+const MixSlider = ({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (columns: number) => void;
+}) => {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleValueFromClientX = (clientX: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    onChange(snapColumnFromClientX(clientX, track.getBoundingClientRect()));
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setIsDragging(true);
+    handleValueFromClientX(event.clientX);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    handleValueFromClientX(event.clientX);
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    setIsDragging(false);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+      event.preventDefault();
+      onChange(Math.max(0, value - 1));
+      return;
+    }
+    if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+      event.preventDefault();
+      onChange(Math.min(GRID_COLUMNS, value + 1));
+      return;
+    }
+    if (event.key === "Home") {
+      event.preventDefault();
+      onChange(0);
+      return;
+    }
+    if (event.key === "End") {
+      event.preventDefault();
+      onChange(GRID_COLUMNS);
+    }
+  };
+
+  const soloPercent = Math.round((value / GRID_COLUMNS) * 100);
+
+  return (
+    <div
+      ref={trackRef}
+      role="slider"
+      tabIndex={0}
+      aria-label="Solo to together mix"
+      aria-valuemin={0}
+      aria-valuemax={GRID_COLUMNS}
+      aria-valuenow={value}
+      aria-valuetext={`${soloPercent}% solo`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onKeyDown={handleKeyDown}
+      className={cn(
+        "relative h-[17px] w-full cursor-pointer touch-none select-none overflow-hidden outline-none",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
+      )}
+    >
+      <div
+        aria-hidden="true"
+        className="grid h-full w-full grid-cols-[repeat(35,minmax(0,1fr))] grid-rows-3"
+      >
+        {GRID_CELLS.map((cell) => (
+          <div
+            key={cell.index}
+            className={cell.isBlack ? "bg-black" : "bg-transparent"}
+          />
+        ))}
+      </div>
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-y-0 left-0 w-full origin-left bg-black will-change-transform",
+          !isDragging &&
+            "transition-transform duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
+          "motion-reduce:transition-none",
+        )}
+        style={{ transform: `scaleX(${value / GRID_COLUMNS})` }}
+      />
+    </div>
   );
 };
 
 export const CreateTripScreen = () => {
   const router = useRouter();
   const trip = getTrip(DEFAULT_TRIP_ID);
-  const [location, setLocation] = useState(trip.destination);
-  const [startDate, setStartDate] = useState(DEFAULT_START_DATE);
-  const [endDate, setEndDate] = useState(DEFAULT_END_DATE);
+  const [location, setLocation] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>({ from: getToday(), to: undefined });
+  const [soloColumns, setSoloColumns] = useState(DEFAULT_SOLO_COLUMNS);
 
   const handleLocationChange = (event: ChangeEvent<HTMLInputElement>) => {
     setLocation(event.target.value);
   };
 
-  const handleLocationFocus = (event: FocusEvent<HTMLInputElement>) => {
-    const input = event.currentTarget;
-    const caret = input.value.length;
-    requestAnimationFrame(() => {
-      input.setSelectionRange(caret, caret);
-    });
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
   };
 
-  const handleStartDateChange = (value: string) => {
-    setStartDate(value);
-    if (endDate < value) {
-      setEndDate(value);
-    }
-  };
-
-  const handleEndDateChange = (value: string) => {
-    setEndDate(value);
+  const handleSoloColumnsChange = (columns: number) => {
+    setSoloColumns(columns);
   };
 
   const handleCreateTrip = (event: FormEvent<HTMLFormElement>) => {
@@ -139,28 +362,16 @@ export const CreateTripScreen = () => {
                     type="text"
                     required
                     value={location}
+                    placeholder="ENTER LOCATION"
                     spellCheck={false}
                     autoComplete="off"
                     onChange={handleLocationChange}
-                    onFocus={handleLocationFocus}
-                    className="w-full border-0 bg-transparent p-0 font-mono text-[15px] font-medium text-[#4A3B2E] caret-[#4A3B2E] outline-none selection:bg-[#DDD2C0] selection:text-[#4A3B2E] focus-visible:outline-none"
+                    className="w-full border-0 bg-transparent p-0 font-mono text-[15px] font-medium text-[#4A3B2E] caret-[#4A3B2E] outline-none placeholder:text-[#4A3B2E]/20 selection:bg-[#DDD2C0] selection:text-[#4A3B2E] focus-visible:outline-none"
                   />
                 </label>
               </div>
 
-              <div className="flex h-10 w-full flex-row justify-between">
-                <TicketDateField
-                  label="START"
-                  value={startDate}
-                  onChange={handleStartDateChange}
-                />
-                <TicketDateField
-                  label="END"
-                  value={endDate}
-                  min={startDate}
-                  onChange={handleEndDateChange}
-                />
-              </div>
+              <TicketDateRange range={dateRange} onRangeChange={handleDateRangeChange} />
 
               <div className="flex w-full flex-col gap-2">
                 <div className="flex w-full flex-row justify-between gap-2">
@@ -171,10 +382,7 @@ export const CreateTripScreen = () => {
                     TOGETHER
                   </span>
                 </div>
-                <div aria-hidden="true" className="relative h-[17px] w-full">
-                  <div className="absolute inset-0 bg-black/50" />
-                  <div className="absolute inset-y-0 left-0 w-[85px] bg-black/50" />
-                </div>
+                <MixSlider value={soloColumns} onChange={handleSoloColumnsChange} />
               </div>
             </div>
 
