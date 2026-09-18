@@ -6,6 +6,7 @@ import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { Drawer } from "@base-ui/react/drawer";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "cn";
+import { Wordmark } from "@/components/ui/wordmark";
 import { api } from "@/lib/api";
 import { JOURNAL_STICKERS } from "@/lib/journal-art";
 
@@ -59,12 +60,7 @@ const Notebook = ({ ownerName }: { ownerName: string | null }) => (
       className="absolute top-[-3.5%] left-[2%] -z-10 h-[84.2%] w-[80.2%] rotate-[-1.34deg] bg-[#CCCCCC] motion-reduce:rotate-0"
     />
     <div className="@container relative z-10 aspect-[354/512] w-full overflow-hidden rounded-[8px_20px_20px_8px] border-t border-white/[0.45] bg-[#416E51] shadow-[0_4px_4px_#00000040] rotate-[1.67deg] motion-reduce:rotate-0">
-      <p className="absolute top-[29.36%] left-[20.89%] font-sans text-[19.87cqw] leading-[1.05] font-black tracking-[-0.677cqw] text-[#21C45D]">
-        SIDE
-      </p>
-      <p className="absolute top-[39.97%] left-[20.89%] font-sans text-[19.87cqw] leading-[1.05] font-black tracking-[-1.13cqw] text-[#21C45D]">
-        QUEST
-      </p>
+      <Wordmark className="absolute top-[29.36%] left-[20.89%] text-[#21C45D]" />
       <div className="absolute top-[76.42%] left-[13.42%] flex h-[18.36%] w-[77.4%] flex-col items-center justify-center gap-2.5 rounded-2xl border border-[#DDD2C0] bg-[#FBF7F0] px-4">
         <p
           aria-live="polite"
