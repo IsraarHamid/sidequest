@@ -117,11 +117,11 @@ export const WelcomeScreen = () => {
   // Buttons stay in the UI; for now they show a note instead of signing in.
   function handleGoogle() {
     setError(null);
-    setInfo("Google sign-in is coming soon — use email below (admin override available).");
+    setInfo("Google sign-in is coming soon — use email below for now.");
   }
   function handleApple() {
     setError(null);
-    setInfo("Apple sign-in is coming soon — use email below (admin override available).");
+    setInfo("Apple sign-in is coming soon — use email below for now.");
   }
 
   async function handleSubmit() {
@@ -218,10 +218,6 @@ export const WelcomeScreen = () => {
               >
                 {mode === "register" ? "Have an account? Sign in" : "New here? Create an account"}
               </button>
-
-              <p className="mt-1 text-center font-sans text-[11px] leading-[16px] text-[#B7AA97]">
-                Admin override (Google/Apple in dev): betterbash@gmail.com / betterbash
-              </p>
             </div>
           )}
         </div>
