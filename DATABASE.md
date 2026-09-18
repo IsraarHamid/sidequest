@@ -19,11 +19,13 @@
 - **Every child references its parent** with `ON DELETE CASCADE` where a child
   can't exist without the parent (e.g. missions without a trip).
 - **Enums as Postgres types** for status/type/rarity → integrity + clarity.
-- **`created_at` / `updated_at`** timestamps on core tables.
+- **`created_at`** timestamps on core tables (add `updated_at` later only where
+  mutation history matters — omitted for MVP simplicity).
 - **Row Level Security (RLS)** notes included; for the 24h demo we can run with
   the service-role key on the backend and enable strict RLS later.
 
-**Legend:** 🟢 MVP (build now) · 🔵 Later (schema ready, not built for demo)
+**Legend:** 🟢 MVP (build now) · 🔵 Later (schema ready, not built for demo) ·
+🟣 Roadmap (future monetization / competition — sketched for completeness)
 
 ---
 
@@ -48,6 +50,10 @@ erDiagram
     users ||--o{ user_badges : earns
     trips ||--o{ user_badges : "earned during"
     mission_completions ||--o| feed_posts : "shared as"
+    competitions ||--o{ competition_trips : includes
+    trips ||--o{ competition_trips : "competes in"
+    battle_passes ||--o{ user_passes : "sold as"
+    users ||--o{ user_passes : buys
 
     users {
         uuid id PK
@@ -148,6 +154,32 @@ erDiagram
         text caption
         timestamptz created_at
     }
+    competitions {
+        uuid id PK
+        text name
+        text destination
+        timestamptz starts_at
+        timestamptz ends_at
+    }
+    competition_trips {
+        uuid competition_id PK
+        uuid trip_id PK
+        int score
+    }
+    battle_passes {
+        uuid id PK
+        text name
+        int price_cents
+        jsonb perks
+        bool active
+    }
+    user_passes {
+        uuid id PK
+        uuid user_id FK
+        uuid pass_id FK
+        timestamptz purchased_at
+        timestamptz expires_at
+    }
 ```
 
 ---
@@ -166,6 +198,8 @@ erDiagram
 | `badges` / `user_badges` | 🔵 | Badge catalog + the user's passport. |
 | `businesses` | 🔵 | Small businesses for exposure + monetization. |
 | `feed_posts` | 🔵 | Travel feed sharing checkpoint photos with tagged businesses. |
+| `competitions` / `competition_trips` | 🟣 | Group-vs-group "Best Travel Group" across trips to the same destination. |
+| `battle_passes` / `user_passes` | 🟣 | Paid passes granting location discounts (monetization). |
 
 ---
 
@@ -312,7 +346,59 @@ create table feed_posts (
     created_at     timestamptz not null default now()
 );
 create index on feed_posts (trip_id);
+
+-- ========== 🟣 Roadmap (future — sketch, safe to skip for hackathon) ==========
+
+-- Group-vs-group competition ("Best Travel Group", esp. peak season)
+create table competitions (
+    id           uuid primary key default gen_random_uuid(),
+    name         text not null,
+    destination  text,
+    starts_at    timestamptz,
+    ends_at      timestamptz,
+    created_at   timestamptz not null default now()
+);
+
+create table competition_trips (
+    competition_id  uuid not null references competitions(id) on delete cascade,
+    trip_id         uuid not null references trips(id) on delete cascade,
+    score           int not null default 0,   -- aggregated group score
+    primary key (competition_id, trip_id)
+);
+
+-- Battle passes (users buy passes → discounts at partner locations)
+create table battle_passes (
+    id           uuid primary key default gen_random_uuid(),
+    name         text not null,
+    price_cents  int not null default 0,
+    perks        jsonb not null default '{}'::jsonb,
+    active       boolean not null default true,
+    created_at   timestamptz not null default now()
+);
+
+create table user_passes (
+    id            uuid primary key default gen_random_uuid(),
+    user_id       uuid not null references users(id) on delete cascade,
+    pass_id       uuid not null references battle_passes(id) on delete cascade,
+    purchased_at  timestamptz not null default now(),
+    expires_at    timestamptz,
+    unique (user_id, pass_id)
+);
 ```
+
+### Design notes (read these)
+
+- **Group missions** (`assignee_user_id IS NULL`): each member may record their own
+  `mission_completion` for a group mission (unique per `(mission_id, user_id)`), so
+  everyone who participates gets points. The **first** completer still gets the
+  first-to-finish bonus. If you'd rather a group mission be "completed once for the
+  whole group," enforce that in the API — the schema supports both readings.
+- **Points are denormalized** onto `trip_members.total_points` (fast leaderboard
+  reads / polling). They must always equal the sum of that member's
+  `mission_completions.points_awarded` for the trip — only mutate via the scoring
+  service so they can't drift.
+- **Strangers joining a trip** (a "later" feature) needs **no schema change** — it's
+  just another `trip_members` row with `role = 'player'` created via a discovery flow.
 
 ---
 
