@@ -38,6 +38,7 @@ class TripCreate(BaseModel):
     origin: Optional[str] = None
     destination: Optional[str] = None
     vibe: Optional[str] = None
+    ends_at: Optional[datetime] = None  # optional overall trip countdown
 
 
 class MemberOut(BaseModel):
@@ -56,6 +57,7 @@ class TripOut(BaseModel):
     status: TripStatus
     join_code: str
     created_by: str
+    ends_at: Optional[datetime] = None  # optional overall trip countdown
     members: list[MemberOut] = Field(default_factory=list)
 
 
@@ -76,6 +78,7 @@ class MissionOut(BaseModel):
     is_secret: bool = False
     status: Literal["open", "completed"] = "open"
     business_id: Optional[str] = None
+    expires_at: Optional[datetime] = None  # optional per-mission timer
     generated_by: Literal["ai", "fallback"] = "ai"
 
 

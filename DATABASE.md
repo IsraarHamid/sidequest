@@ -81,6 +81,7 @@ erDiagram
         text join_code UK
         uuid created_by FK
         timestamptz start_time
+        timestamptz ends_at
         timestamptz created_at
     }
     trip_members {
@@ -103,6 +104,7 @@ erDiagram
         bool is_secret
         mission_status status
         uuid business_id FK "nullable"
+        timestamptz expires_at
         text generated_by
         timestamptz created_at
     }
@@ -249,6 +251,7 @@ create table trips (
     join_code    text unique not null,
     created_by   uuid not null references users(id) on delete cascade,
     start_time   timestamptz,
+    ends_at      timestamptz,   -- optional overall trip countdown (design: countdown timer)
     created_at   timestamptz not null default now()
 );
 create index on trips (join_code);
@@ -276,6 +279,7 @@ create table missions (
     is_secret         boolean not null default false,
     status            mission_status not null default 'open',
     business_id       uuid,  -- FK added in 🔵 section
+    expires_at        timestamptz,  -- optional per-mission timer (nullable = no limit)
     generated_by      text not null default 'ai',
     created_at        timestamptz not null default now()
 );

@@ -68,6 +68,7 @@ def create_trip(created_by: str, data: dict) -> dict:
         "status": "draft",
         "join_code": _join_code(),
         "created_by": created_by,
+        "ends_at": data.get("ends_at"),
     }
     trips[tid] = trip
     members[tid] = []
@@ -122,6 +123,7 @@ def save_missions(trip_id: str, mission_dicts: list[dict]) -> list[dict]:
             "is_secret": bool(m.get("is_secret", False)),
             "status": "open",
             "business_id": m.get("business_id"),
+            "expires_at": m.get("expires_at"),
             "generated_by": m.get("generated_by", "ai"),
         }
         missions[mid] = mission
