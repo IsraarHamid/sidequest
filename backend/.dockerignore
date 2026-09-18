@@ -1,0 +1,10 @@
+# Never ship secrets or local artifacts into the image
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+Dockerfile
+.dockerignore
+# NOTE: keep mission_generator.md — the planner loads it at runtime.

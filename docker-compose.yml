@@ -1,0 +1,30 @@
+# Local containerised run of the whole stack (backup / parity with prod images).
+#   1. cp backend/.env.example backend/.env   # add keys (optional)
+#   2. docker compose up --build
+#   3. open http://localhost:3000   (API on http://localhost:8000)
+# If port 3000 is taken (e.g. by Docker/another app), change "3000:3000" to
+# "3001:3000" below and rebuild with NEXT_PUBLIC_API_BASE_URL unchanged.
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ./backend/.env
+        required: false        # runs on fallbacks if no .env present
+    environment:
+      - PORT=8000
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Public build-time value; the browser calls the backend at this URL.
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - backend
