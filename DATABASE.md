@@ -1,0 +1,365 @@
+# TRIP QUEST — Database Architecture & Schema
+
+> **Purpose:** The single reference for our database design. It supports the
+> **entire project** (MVP + later features) so we can build the backend DB
+> structure once, seamlessly. Pairs with [`BACKEND.md`](BACKEND.md) (contracts)
+> and [`backend/app/store.py`](backend/app/store.py) (the in-memory dev mirror
+> to be swapped for these tables).
+>
+> **Default engine:** Supabase (PostgreSQL). The design is standard SQL, so it
+> ports to any Postgres. Diagram renders on GitHub (Mermaid).
+
+---
+
+## 1. Design principles
+
+- **Build MVP tables first**, but model the whole thing so later features
+  (strangers joining, travel feed, battle passes, group-vs-group) need no rewrite.
+- **UUID primary keys** everywhere (`gen_random_uuid()`), created via `pgcrypto`.
+- **Every child references its parent** with `ON DELETE CASCADE` where a child
+  can't exist without the parent (e.g. missions without a trip).
+- **Enums as Postgres types** for status/type/rarity → integrity + clarity.
+- **`created_at` / `updated_at`** timestamps on core tables.
+- **Row Level Security (RLS)** notes included; for the 24h demo we can run with
+  the service-role key on the backend and enable strict RLS later.
+
+**Legend:** 🟢 MVP (build now) · 🔵 Later (schema ready, not built for demo)
+
+---
+
+## 2. Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+    users ||--o| user_preferences : has
+    users ||--o{ trip_members : joins
+    users ||--o{ trips : creates
+    trips ||--o{ trip_members : contains
+    trips ||--o{ missions : has
+    trips ||--o{ feed_posts : has
+    users ||--o{ missions : "assigned (nullable)"
+    missions ||--o{ mission_completions : "completed via"
+    users ||--o{ mission_completions : completes
+    mission_completions ||--o{ rankings : "rated by"
+    users ||--o{ rankings : casts
+    businesses ||--o{ missions : "tagged in"
+    businesses ||--o{ feed_posts : "tagged in"
+    badges ||--o{ user_badges : awarded
+    users ||--o{ user_badges : earns
+    trips ||--o{ user_badges : "earned during"
+    mission_completions ||--o| feed_posts : "shared as"
+
+    users {
+        uuid id PK
+        text email
+        text display_name
+        text avatar_url
+        bool is_anonymous
+        timestamptz created_at
+    }
+    user_preferences {
+        uuid user_id PK
+        text[] interests
+        text diet
+        text adventure_level
+        text budget
+        text free_text
+    }
+    trips {
+        uuid id PK
+        text name
+        text origin
+        text destination
+        text vibe
+        trip_status status
+        text join_code UK
+        uuid created_by FK
+        timestamptz start_time
+        timestamptz created_at
+    }
+    trip_members {
+        uuid id PK
+        uuid trip_id FK
+        uuid user_id FK
+        member_role role
+        int total_points
+        timestamptz joined_at
+    }
+    missions {
+        uuid id PK
+        uuid trip_id FK
+        uuid assignee_user_id FK "null = group mission"
+        text title
+        text description
+        mission_type type
+        mission_rarity rarity
+        int points
+        bool is_secret
+        mission_status status
+        uuid business_id FK "nullable"
+        text generated_by
+        timestamptz created_at
+    }
+    mission_completions {
+        uuid id PK
+        uuid mission_id FK
+        uuid user_id FK
+        text photo_url
+        bool is_first
+        int points_awarded
+        timestamptz completed_at
+    }
+    rankings {
+        uuid id PK
+        uuid completion_id FK
+        uuid voter_user_id FK
+        text category
+        int score
+        timestamptz created_at
+    }
+    badges {
+        uuid id PK
+        text code UK
+        text name
+        text description
+        text icon
+    }
+    user_badges {
+        uuid id PK
+        uuid user_id FK
+        uuid badge_id FK
+        uuid trip_id FK
+        timestamptz earned_at
+    }
+    businesses {
+        uuid id PK
+        text name
+        text location
+        text category
+        text[] tags
+        bool is_promoted
+        timestamptz created_at
+    }
+    feed_posts {
+        uuid id PK
+        uuid completion_id FK
+        uuid trip_id FK
+        uuid business_id FK
+        text caption
+        timestamptz created_at
+    }
+```
+
+---
+
+## 3. Tables at a glance
+
+| Table | Tier | Purpose |
+|---|---|---|
+| `users` | 🟢 | Accounts (incl. anonymous for the demo). |
+| `user_preferences` | 🟢 | Feeds the AI mission engine. |
+| `trips` | 🟢 | A group + game instance (one per trip). Has a `join_code`. |
+| `trip_members` | 🟢 | Who's in a trip + their running score. |
+| `missions` | 🟢 | AI/fallback-generated missions (solo/group/secret). |
+| `mission_completions` | 🟢 | A player completing a mission (photo optional, first-to-finish flag). |
+| `rankings` | 🔵 | Friends rating each other's completions (best food, funniest…). |
+| `badges` / `user_badges` | 🔵 | Badge catalog + the user's passport. |
+| `businesses` | 🔵 | Small businesses for exposure + monetization. |
+| `feed_posts` | 🔵 | Travel feed sharing checkpoint photos with tagged businesses. |
+
+---
+
+## 4. Full SQL schema (Postgres / Supabase)
+
+> Run in the Supabase SQL editor. Build the 🟢 MVP section first; the 🔵 section
+> is safe to run now too (it just prepares later features).
+
+```sql
+-- Extensions
+create extension if not exists pgcrypto;
+
+-- ---------- Enums ----------
+create type trip_status     as enum ('draft', 'active', 'arrived', 'ended');
+create type member_role     as enum ('host', 'player');
+create type mission_type    as enum ('solo', 'group', 'secret');
+create type mission_rarity  as enum ('common', 'rare', 'legendary');
+create type mission_status  as enum ('open', 'completed');
+
+-- ========== 🟢 MVP ==========
+
+create table users (
+    id            uuid primary key default gen_random_uuid(),
+    email         text unique,
+    display_name  text not null default 'Player',
+    avatar_url    text,
+    is_anonymous  boolean not null default true,
+    created_at    timestamptz not null default now()
+);
+
+create table user_preferences (
+    user_id          uuid primary key references users(id) on delete cascade,
+    interests        text[] not null default '{}',
+    diet             text,
+    adventure_level  text,
+    budget           text,
+    free_text        text
+);
+
+create table trips (
+    id           uuid primary key default gen_random_uuid(),
+    name         text not null,
+    origin       text,
+    destination  text,
+    vibe         text,
+    status       trip_status not null default 'draft',
+    join_code    text unique not null,
+    created_by   uuid not null references users(id) on delete cascade,
+    start_time   timestamptz,
+    created_at   timestamptz not null default now()
+);
+create index on trips (join_code);
+
+create table trip_members (
+    id            uuid primary key default gen_random_uuid(),
+    trip_id       uuid not null references trips(id) on delete cascade,
+    user_id       uuid not null references users(id) on delete cascade,
+    role          member_role not null default 'player',
+    total_points  int not null default 0,
+    joined_at     timestamptz not null default now(),
+    unique (trip_id, user_id)
+);
+create index on trip_members (trip_id);
+
+create table missions (
+    id                uuid primary key default gen_random_uuid(),
+    trip_id           uuid not null references trips(id) on delete cascade,
+    assignee_user_id  uuid references users(id) on delete set null, -- null = group
+    title             text not null,
+    description       text,
+    type              mission_type not null default 'solo',
+    rarity            mission_rarity not null default 'common',
+    points            int not null default 100,
+    is_secret         boolean not null default false,
+    status            mission_status not null default 'open',
+    business_id       uuid,  -- FK added in 🔵 section
+    generated_by      text not null default 'ai',
+    created_at        timestamptz not null default now()
+);
+create index on missions (trip_id);
+create index on missions (assignee_user_id);
+
+create table mission_completions (
+    id              uuid primary key default gen_random_uuid(),
+    mission_id      uuid not null references missions(id) on delete cascade,
+    user_id         uuid not null references users(id) on delete cascade,
+    photo_url       text,
+    is_first        boolean not null default false,
+    points_awarded  int not null default 0,
+    completed_at    timestamptz not null default now(),
+    unique (mission_id, user_id)   -- a user completes a mission once
+);
+create index on mission_completions (mission_id);
+
+-- ========== 🔵 Later (schema-ready) ==========
+
+create table businesses (
+    id           uuid primary key default gen_random_uuid(),
+    name         text not null,
+    location     text,
+    category     text,
+    tags         text[] not null default '{}',
+    is_promoted  boolean not null default false,  -- monetization hook
+    created_at   timestamptz not null default now()
+);
+
+alter table missions
+    add constraint missions_business_fk
+    foreign key (business_id) references businesses(id) on delete set null;
+
+create table rankings (
+    id             uuid primary key default gen_random_uuid(),
+    completion_id  uuid not null references mission_completions(id) on delete cascade,
+    voter_user_id  uuid not null references users(id) on delete cascade,
+    category       text not null,          -- best_food | best_photo | funniest | ...
+    score          int not null default 1,
+    created_at     timestamptz not null default now(),
+    unique (completion_id, voter_user_id, category)  -- one vote per category
+);
+
+create table badges (
+    id           uuid primary key default gen_random_uuid(),
+    code         text unique not null,     -- e.g. 'first_mission'
+    name         text not null,
+    description  text,
+    icon         text
+);
+
+create table user_badges (
+    id         uuid primary key default gen_random_uuid(),
+    user_id    uuid not null references users(id) on delete cascade,
+    badge_id   uuid not null references badges(id) on delete cascade,
+    trip_id    uuid references trips(id) on delete set null,
+    earned_at  timestamptz not null default now(),
+    unique (user_id, badge_id, trip_id)
+);
+
+create table feed_posts (
+    id             uuid primary key default gen_random_uuid(),
+    completion_id  uuid not null references mission_completions(id) on delete cascade,
+    trip_id        uuid not null references trips(id) on delete cascade,
+    business_id    uuid references businesses(id) on delete set null,
+    caption        text,
+    created_at     timestamptz not null default now()
+);
+create index on feed_posts (trip_id);
+```
+
+---
+
+## 5. Storage (Supabase Storage)
+
+Files are NOT stored in the DB — only their paths/URLs are (e.g.
+`mission_completions.photo_url`, `feed_posts` images, `users.avatar_url`).
+
+| Bucket | Tier | Contents | Access |
+|---|---|---|---|
+| `mission-photos` | 🟢 (stretch) | Checkpoint completion photos | Private → signed URLs for trip members |
+| `avatars` | 🔵 | Profile images | Public or signed |
+| `feed` | 🔵 | Travel-feed images | Signed |
+
+---
+
+## 6. Row Level Security (RLS) — plan
+
+For the **24h demo**, the backend uses the **service-role key** and enforces
+access in the API layer (keep it simple, ship fast). For a fair-and-safe
+production posture, enable RLS with policies like:
+
+- `users`: a user can read/update only their own row.
+- `trips` / `trip_members` / `missions` / `mission_completions`: readable only by
+  members of that trip; secret missions readable only by their `assignee_user_id`.
+- `rankings`: a member can insert a vote for completions in their trip, once per category.
+
+> Decision logged in `BACKEND.md §12`: RLS strict later; service-role + API checks now.
+
+---
+
+## 7. How this maps to the code
+
+- The in-memory dev store [`backend/app/store.py`](backend/app/store.py) mirrors
+  these tables function-for-function. To go live on Supabase, replace each
+  function body with the equivalent query — **routers and contracts don't change.**
+- Pydantic models in [`backend/app/models.py`](backend/app/models.py) are the API
+  shapes; keep column names aligned with them.
+
+---
+
+## 8. Seed data suggestion (for a lively demo)
+
+Pre-insert a few `businesses` (real SA spots on your demo route) and a handful of
+`badges` (`first_mission`, `five_missions`, `group_complete`, `first_to_finish`)
+so the passport and business-tagging story look real on stage.
+
+---
+
+*Last updated: 2026-09-18 · Update this file whenever the schema changes.*

@@ -1,6 +1,21 @@
+# Node / frontend
 node_modules/
 .next/
+.vercel
+
+# Python / backend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+*.egg-info/
+
+# Env & secrets (keep .env.example tracked)
 .env*
+!.env.example
+
+# OS / logs
 .DS_Store
 *.log
-.vercel
