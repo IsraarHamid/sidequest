@@ -5,6 +5,7 @@ from app.deps import get_current_user
 from app.models import (JoinIn, LeaderboardEntry, MissionOut, TripCreate,
                         TripOut)
 from app.services.ai import generate_missions
+from app.services.mission_planner import generate_plan
 from app.services.places import fetch_places_along_route
 from app.services.timers import is_expired
 
@@ -71,6 +72,51 @@ def start_trip(trip_id: str, current=Depends(get_current_user)):
     saved = store.save_missions(trip_id, mission_dicts)
     store.set_trip_status(trip_id, "active")
     return saved
+
+
+@router.post("/{trip_id}/plan")
+def plan_trip(trip_id: str, current=Depends(get_current_user)):
+    """Rich, route-aware plan via mission_generator.md + the LLM.
+
+    Returns legs, per-member checkpoints (each with a Google Maps link), shared
+    checkpoints, scoring, and a summary. Needs GEMINI_API_KEY; 503 if unavailable.
+    """
+    trip = store.get_trip(trip_id)
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    members = []
+    for m in store.get_members(trip_id):
+        prefs = (store.get_user(m["user_id"]) or {}).get("preferences", {})
+        constraints = [prefs["diet"]] if prefs.get("diet") else []
+        if prefs.get("adventure_level"):
+            constraints.append(prefs["adventure_level"])
+        members.append({
+            "name": m["display_name"],
+            "preferences": prefs.get("interests") or [],
+            "dislikes": [],
+            "constraints": constraints,
+            "budget_per_person": prefs.get("budget"),
+        })
+
+    plan = generate_plan(trip, members)
+    if not plan:
+        raise HTTPException(
+            status_code=503,
+            detail="Mission planner unavailable (set GEMINI_API_KEY / check quota).",
+        )
+    store.save_plan(trip_id, plan)
+    store.set_trip_status(trip_id, "active")
+    return plan
+
+
+@router.get("/{trip_id}/plan")
+def get_plan(trip_id: str, current=Depends(get_current_user)):
+    """Fetch a previously generated plan (404 if none yet)."""
+    plan = store.get_plan(trip_id)
+    if not plan:
+        raise HTTPException(status_code=404, detail="No plan generated yet")
+    return plan
 
 
 @router.post("/{trip_id}/arrive", response_model=TripOut)

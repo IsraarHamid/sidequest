@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trip Quest",
-  description: "Trip Quest",
+  title: "SideQuest",
+  description: "SideQuest — every journey is a multiplayer game.",
 };
 
 export const viewport: Viewport = {

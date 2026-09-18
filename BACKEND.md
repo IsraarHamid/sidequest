@@ -146,7 +146,9 @@ Not exhaustive — a shared starting point. All return JSON; auth via `Authoriza
 - `POST /trips` — create trip → returns `join_code`
 - `POST /trips/join` — join by `join_code`
 - `GET /trips/{id}` — trip + members
-- `POST /trips/{id}/start` — status → `active`, triggers mission generation
+- `POST /trips/{id}/start` — status → `active`, triggers **simple** mission generation
+- `POST /trips/{id}/plan` — **rich** route-aware plan via `mission_generator.md` + the LLM (legs, per-member checkpoints with Google Maps links, shared checkpoints, scoring, summary). 503 if no `GEMINI_API_KEY`.
+- `GET /trips/{id}/plan` — fetch a previously generated plan
 - `POST /trips/{id}/arrive` — status → `arrived`, triggers recap
 
 **Missions**
@@ -300,6 +302,8 @@ GEMINI_USE_MAPS_GROUNDING=false   # true only with a billing-enabled project
 - [x] **File/photo storage → Supabase Storage** (see §4 storage note). Private buckets + signed URLs.
 - [x] **Photos → Mark-complete first (core), photo upload as first stretch goal.** Guarantees a working loop; photos added once core works (high demo value for business-tagging story).
 - [x] **First-to-finish bonus → Build it for real (it's trivial).** On `POST /missions/{id}/complete`, if no completion exists yet for that `mission_id`, set `is_first=true` + apply bonus. One query, ~10 lines.
+- [x] **Locations → Google Maps links, NOT Maps grounding.** Grounding needs billing; instead the LLM returns name+address and we attach a `maps_url` (see `app/locations.py` / frontend `lib/maps.ts`). Free, no quota. Grounding stays opt-in (`GEMINI_USE_MAPS_GROUNDING`).
+- [x] **Rich mission generation → use the team prompt `mission_generator.md`** via `services/mission_planner.py` (LLM = Gemini today), exposed at `POST /trips/{id}/plan`. The simple `services/ai.py` loop stays as the low-risk fallback. See [`INTEGRATION.md`](INTEGRATION.md).
 
 ### Fastest path to "up and running"
 1. Create Supabase project (free) → grab URL + keys.
