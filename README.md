@@ -216,6 +216,8 @@ Run / Vercel) with step-by-step guides and secret-safety notes.
 
 ## Notes
 
-- **Persistence:** currently an in-memory store (resets on restart). Supabase
-  wiring (schema in `DATABASE.md`) is the next step for real persistence.
+- **Persistence:** **Supabase** when `SUPABASE_URL` + service key are set (the
+  backend auto-selects it; schema in `supabase/schema.sql`); falls back to an
+  in-memory store otherwise. User mission photos use **Supabase Storage**.
 - **Secrets:** backend-only, via env vars; never committed or baked into images.
+  Admin override is seeded from `ADMIN_EMAIL`/`ADMIN_PASSWORD` into the DB.

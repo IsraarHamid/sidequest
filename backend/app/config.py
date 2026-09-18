@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     # Leave False for the free tier (uses Gemini's own knowledge for real places).
     gemini_use_maps_grounding: bool = False
 
+    # Admin override credentials (NOT hardcoded — from env; seeded into the DB).
+    admin_email: str = ""
+    admin_password: str = ""
+
+    # Supabase Storage bucket for user-uploaded mission photos.
+    storage_bucket: str = "mission-photos"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
