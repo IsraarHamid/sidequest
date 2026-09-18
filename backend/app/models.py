@@ -78,6 +78,7 @@ class MissionOut(BaseModel):
     is_secret: bool = False
     status: Literal["open", "completed"] = "open"
     business_id: Optional[str] = None
+    business_name: Optional[str] = None    # real place name (Gemini Maps grounding)
     expires_at: Optional[datetime] = None  # optional per-mission timer (null = no limit)
     is_expired: bool = False               # computed convenience for the client
     generated_by: Literal["ai", "fallback"] = "ai"

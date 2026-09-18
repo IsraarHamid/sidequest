@@ -30,10 +30,12 @@ _SECRET = [
 ]
 
 
-def build_fallback_missions(trip: dict, players: list[dict], counts: dict) -> list[dict]:
+def build_fallback_missions(trip: dict, players: list[dict], counts: dict,
+                            places: list[dict] | None = None) -> list[dict]:
     out: list[dict] = []
     solo_n = counts.get("solo_per_player", 2)
     secret_n = counts.get("secret_per_player", 1)
+    places = places or []
 
     for p in players:
         picks = random.sample(_SOLO, min(solo_n, len(_SOLO)))
@@ -73,4 +75,16 @@ def build_fallback_missions(trip: dict, players: list[dict], counts: dict) -> li
         "points": RARITY_POINTS["legendary"], "is_secret": False,
         "generated_by": "fallback",
     })
+
+    # real-place checkpoint missions (from Gemini Maps grounding, if available)
+    for place, player in zip(places[:2], players):
+        out.append({
+            "assignee_user_id": player["id"],
+            "title": f"Check in at {place['name']}",
+            "description": place.get("category") or "A real local spot on your route.",
+            "type": "solo", "rarity": "common",
+            "points": RARITY_POINTS["common"], "is_secret": False,
+            "business_name": place["name"],
+            "generated_by": "fallback",
+        })
     return out
