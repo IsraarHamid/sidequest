@@ -15,7 +15,7 @@ export const SandboxShell = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isOpen, setIsOpen] = useState(true);
   const [activePath, setActivePath] = useState(DEFAULT_SANDBOX_HREF);
-  const [iframeSrc] = useState(DEFAULT_SANDBOX_HREF);
+  const [iframeSrc, setIframeSrc] = useState(DEFAULT_SANDBOX_HREF);
 
   const activeScreen = findSandboxScreen(activePath);
 
@@ -78,9 +78,7 @@ export const SandboxShell = () => {
     if (href.startsWith("/sandbox")) return;
 
     setActivePath(href);
-    const frame = iframeRef.current;
-    if (!frame) return;
-    frame.src = new URL(href, window.location.origin).toString();
+    setIframeSrc(href);
   };
 
   return (
