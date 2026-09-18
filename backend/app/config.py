@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     claude_model: str = "claude-sonnet-5"
 
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
@@ -32,6 +35,10 @@ class Settings(BaseSettings):
     @property
     def ai_enabled(self) -> bool:
         return bool(self.anthropic_api_key)
+
+    @property
+    def places_enabled(self) -> bool:
+        return bool(self.gemini_api_key)
 
 
 @lru_cache

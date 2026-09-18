@@ -43,4 +43,5 @@ def health():
         "env": settings.app_env,
         "supabase": settings.supabase_enabled,   # False => using in-memory store
         "ai": settings.ai_enabled,               # False => using fallback missions
+        "places": settings.places_enabled,       # False => no real-place discovery
     }

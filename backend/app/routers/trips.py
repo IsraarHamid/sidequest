@@ -5,6 +5,7 @@ from app.deps import get_current_user
 from app.models import (JoinIn, LeaderboardEntry, MissionOut, TripCreate,
                         TripOut)
 from app.services.ai import generate_missions
+from app.services.places import fetch_places_along_route
 from app.services.timers import is_expired
 
 router = APIRouter(prefix="/trips", tags=["trips"])
@@ -48,7 +49,25 @@ def start_trip(trip_id: str, current=Depends(get_current_user)):
          "preferences": (store.get_user(m["user_id"]) or {}).get("preferences", {})}
         for m in store.get_members(trip_id)
     ]
-    mission_dicts = generate_missions(trip, players)
+
+    # Discover real places along the route (Gemini Maps grounding; [] if disabled)
+    interests = sorted({
+        i for p in players for i in (p["preferences"].get("interests") or [])
+    })
+    places = fetch_places_along_route(
+        origin=trip.get("origin"), destination=trip.get("destination"),
+        vibe=trip.get("vibe"), interests=interests,
+    )
+    name_to_business_id = store.save_businesses(places)
+
+    mission_dicts = generate_missions(trip, players, places=places)
+
+    # Link missions tagged with a real place to its business record
+    for m in mission_dicts:
+        bn = m.get("business_name")
+        if bn and bn in name_to_business_id:
+            m["business_id"] = name_to_business_id[bn]
+
     saved = store.save_missions(trip_id, mission_dicts)
     store.set_trip_status(trip_id, "active")
     return saved

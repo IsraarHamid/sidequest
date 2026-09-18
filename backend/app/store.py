@@ -20,6 +20,7 @@ trips: dict[str, dict] = {}
 members: dict[str, list[dict]] = {}          # trip_id -> [member dict]
 missions: dict[str, dict] = {}               # mission_id -> mission
 completions: dict[str, dict] = {}            # completion_id -> completion
+businesses: dict[str, dict] = {}             # business_id -> business
 
 
 def _now() -> datetime:
@@ -106,6 +107,31 @@ def set_trip_status(trip_id: str, status: str) -> dict:
     return trips[trip_id]
 
 
+# ---- Businesses (real places from Gemini Maps grounding) ----
+def save_businesses(places: list[dict]) -> dict[str, str]:
+    """Create business rows from discovered places. Returns {name: business_id}."""
+    name_to_id: dict[str, str] = {}
+    for p in places:
+        bid = _id()
+        businesses[bid] = {
+            "id": bid,
+            "name": p["name"],
+            "location": p.get("address"),
+            "category": p.get("category"),
+            "tags": [],
+            "is_promoted": False,
+            "rating": p.get("rating"),
+            "lat": p.get("lat"),
+            "lng": p.get("lng"),
+        }
+        name_to_id[p["name"]] = bid
+    return name_to_id
+
+
+def get_business(business_id: str) -> dict | None:
+    return businesses.get(business_id)
+
+
 # ---- Missions ----
 def save_missions(trip_id: str, mission_dicts: list[dict]) -> list[dict]:
     saved = []
@@ -123,6 +149,7 @@ def save_missions(trip_id: str, mission_dicts: list[dict]) -> list[dict]:
             "is_secret": bool(m.get("is_secret", False)),
             "status": "open",
             "business_id": m.get("business_id"),
+            "business_name": m.get("business_name"),
             "expires_at": m.get("expires_at"),
             "generated_by": m.get("generated_by", "ai"),
         }

@@ -26,6 +26,10 @@ Rules:
 - MOST missions have NO time limit (omit time_limit_minutes / set it null). Give a
   time limit to only a FEW missions (roughly 1 in 4) where urgency adds fun — a
   "quick! do it now" challenge. Timed missions can be worth a bit more.
+- If the input includes a "places" list of REAL local businesses, base some
+  missions at those places and set "business_name" to EXACTLY one of the provided
+  names (copy it verbatim). NEVER invent a place name. Missions that aren't tied to
+  a specific place omit business_name (or set it null).
 - Return ONLY valid JSON. No prose, no markdown fences.
 
 Return this exact JSON shape:
@@ -39,13 +43,15 @@ Return this exact JSON shape:
       "rarity": "common" | "rare" | "legendary",
       "points": <int>,
       "is_secret": <bool>,
-      "time_limit_minutes": <int or null — null for most missions>
+      "time_limit_minutes": <int or null — null for most missions>,
+      "business_name": "<one of the provided real place names, or null>"
     }
   ]
 }"""
 
 
-def _build_user_prompt(trip: dict, players: list[dict], counts: dict) -> str:
+def _build_user_prompt(trip: dict, players: list[dict], counts: dict,
+                       places: list[dict] | None = None) -> str:
     return json.dumps({
         "trip": {
             "origin": trip.get("origin"),
@@ -55,6 +61,10 @@ def _build_user_prompt(trip: dict, players: list[dict], counts: dict) -> str:
         "players": [
             {"name": p["name"], "preferences": p.get("preferences", {})}
             for p in players
+        ],
+        "places": [
+            {"name": p["name"], "category": p.get("category")}
+            for p in (places or [])
         ],
         "counts": counts,
     }, ensure_ascii=False)
@@ -77,6 +87,7 @@ def _parse_and_map(raw_text: str, players: list[dict]) -> list[dict]:
             "points": int(m.get("points", RARITY_POINTS.get(rarity, 100))),
             "is_secret": bool(m.get("is_secret", m.get("type") == "secret")),
             "time_limit_minutes": m.get("time_limit_minutes"),
+            "business_name": m.get("business_name"),
             "generated_by": "ai",
         })
     if not out:
@@ -97,7 +108,8 @@ def _apply_timers(missions: list[dict]) -> list[dict]:
     return missions
 
 
-def _call_claude(trip: dict, players: list[dict], counts: dict) -> str:
+def _call_claude(trip: dict, players: list[dict], counts: dict,
+                 places: list[dict] | None) -> str:
     from anthropic import Anthropic
 
     settings = get_settings()
@@ -106,27 +118,31 @@ def _call_claude(trip: dict, players: list[dict], counts: dict) -> str:
         model=settings.claude_model,
         max_tokens=2000,
         system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": _build_user_prompt(trip, players, counts)}],
+        messages=[{"role": "user",
+                   "content": _build_user_prompt(trip, players, counts, places)}],
     )
     # Concatenate text blocks
     return "".join(block.text for block in msg.content if block.type == "text")
 
 
 def generate_missions(trip: dict, players: list[dict],
-                      counts: dict | None = None) -> list[dict]:
-    """players: [{"id", "name", "preferences": {...}}, ...]"""
+                      counts: dict | None = None,
+                      places: list[dict] | None = None) -> list[dict]:
+    """players: [{"id", "name", "preferences": {...}}, ...]
+    places: optional real businesses (from services.places) to base missions at.
+    """
     counts = counts or {"solo_per_player": 2, "group": 1, "secret_per_player": 1}
     settings = get_settings()
 
     if not settings.ai_enabled:
-        return _apply_timers(build_fallback_missions(trip, players, counts))
+        return _apply_timers(build_fallback_missions(trip, players, counts, places))
 
     for attempt in range(2):  # try once, retry once
         try:
-            raw = _call_claude(trip, players, counts)
+            raw = _call_claude(trip, players, counts, places)
             return _apply_timers(_parse_and_map(raw, players))
         except Exception as exc:  # noqa: BLE001 - demo safety net
             print(f"[ai] mission generation attempt {attempt + 1} failed: {exc}")
 
     print("[ai] falling back to hardcoded mission deck")
-    return _apply_timers(build_fallback_missions(trip, players, counts))
+    return _apply_timers(build_fallback_missions(trip, players, counts, places))

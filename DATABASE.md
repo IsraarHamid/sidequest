@@ -198,7 +198,7 @@ erDiagram
 | `mission_completions` | 🟢 | A player completing a mission (photo optional, first-to-finish flag). |
 | `rankings` | 🔵 | Friends rating each other's completions (best food, funniest…). |
 | `badges` / `user_badges` | 🔵 | Badge catalog + the user's passport. |
-| `businesses` | 🔵 | Small businesses for exposure + monetization. |
+| `businesses` | 🟢* | Small businesses for exposure + monetization. *Populated at trip start from Gemini Maps grounding (`services/places.py`); missions link via `business_id`.* |
 | `feed_posts` | 🔵 | Travel feed sharing checkpoint photos with tagged businesses. |
 | `competitions` / `competition_trips` | 🟣 | Group-vs-group "Best Travel Group" across trips to the same destination. |
 | `battle_passes` / `user_passes` | 🟣 | Paid passes granting location discounts (monetization). |

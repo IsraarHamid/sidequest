@@ -63,7 +63,8 @@
 | Auth | **Supabase Auth** | Firebase Auth, custom JWT | Anonymous + email; JWT verified in API |
 | Real-time | **Supabase Realtime** | Firebase, WebSockets, polling | For live leaderboard/mission status |
 | File/photo storage | **Supabase Storage** ✅ *confirmed* | Cloudinary (free tier — only if heavy image transforms needed), Firebase Storage | Mission checkpoint photos — see storage note below |
-| AI / mission engine | **Claude `claude-sonnet-5`** (Anthropic API) | — | Server-side only (§8) |
+| AI / mission engine | **Claude `claude-sonnet-5`** (Anthropic API) | — | Creative mission writing. Server-side only (§8) |
+| Real-place discovery | **Gemini + Google Maps grounding** (`services/places.py`) | OpenStreetMap Overpass (free, no ratings) | Optional. Real businesses along the route → mission checkpoints. Free tier ample for demo. `[]` if `GEMINI_API_KEY` unset. |
 | Hosting (API) | **Render / Railway free tier** or **Fly.io** | Any container host | FastAPI needs a Python host (not Vercel-static) |
 | Env / secrets | **`.env` + host env vars** | — | Never commit secrets |
 | Package mgmt | **`pip` + `requirements.txt`** | `uv`, Poetry | Keep simple for 24h |
@@ -216,6 +217,23 @@ Lives in `services/ai.py`. **Server-side only** (Claude key never reaches the cl
 
 **Fallback:** `data/fallback_missions.py` holds a generic-but-fun deck. If the AI call fails or returns invalid JSON twice, serve the fallback so the demo never breaks.
 
+### Real places (Gemini Maps grounding) — `services/places.py`
+
+On trip start, the backend optionally calls **Gemini + Google Maps grounding** to
+fetch real, currently-operating businesses along the route (name/category/address/
+rating/coords). These are:
+1. saved as `businesses` rows (`store.save_businesses`), and
+2. passed to the mission engine as candidate checkpoints. Claude may tag a mission
+   with `business_name` (copied verbatim from a provided place); the start endpoint
+   resolves that to `business_id`.
+
+This powers the **small-business-checkpoint** feature and eliminates hallucinated
+places. Fully optional and defensive: no `GEMINI_API_KEY`, SDK missing, or any
+error → returns `[]`, and missions generate normally without real places.
+Free tier is ample for the demo (Maps grounding ~5000 free prompts/month).
+**Privacy note:** on Gemini's *free* tier, inputs/outputs may be used to improve
+Google's models — fine for the demo; send nothing sensitive.
+
 ---
 
 ## 9. Scoring rules (services/scoring.py)
@@ -241,6 +259,10 @@ SUPABASE_SERVICE_ROLE_KEY=   # server-side only, never expose
 # Anthropic / Claude
 ANTHROPIC_API_KEY=
 CLAUDE_MODEL=claude-sonnet-5
+
+# Gemini (real-place discovery via Google Maps grounding — optional)
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
 ```
 **Never commit real values.** Commit only `.env.example`.
 
