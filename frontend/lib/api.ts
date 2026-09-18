@@ -123,6 +123,24 @@ export type LeaderboardEntry = {
   total_points: number;
 };
 
+export type Completion = {
+  id: string;
+  mission_id: string;
+  user_id: string;
+  photo_url?: string | null;
+  is_first: boolean;
+  points_awarded: number;
+  completed_at: string;
+};
+
+export type UserPhoto = {
+  mission_id: string;
+  mission_title?: string | null;
+  trip_id?: string | null;
+  photo_url: string;
+  completed_at: string;
+};
+
 // The rich plan (mission_generator.md). Loosely typed — the LLM output is nested.
 export type PlanCheckpoint = {
   leg_number: number;
@@ -213,10 +231,28 @@ export const api = {
   listMissions: (tripId: string) =>
     request<Mission[]>(`/trips/${tripId}/missions`),
   completeMission: (missionId: string, photoUrl?: string) =>
-    request(`/missions/${missionId}/complete`, {
+    request<Completion>(`/missions/${missionId}/complete`, {
       method: "POST",
       body: JSON.stringify({ photo_url: photoUrl ?? null }),
     }),
+  // Multipart upload (compressed + stored server-side); returns the photo URL.
+  async uploadMissionPhoto(missionId: string, file: File): Promise<{ photo_url: string }> {
+    const headers = new Headers();
+    const uid = getUserId();
+    if (uid) headers.set("X-User-Id", uid);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${BASE_URL}/missions/${missionId}/photo`, {
+      method: "POST",
+      headers, // do NOT set Content-Type — the browser adds the multipart boundary
+      body: form,
+    });
+    if (!res.ok) {
+      throw new Error(`Upload ${res.status}: ${await res.text().catch(() => "")}`);
+    }
+    return res.json();
+  },
+  myPhotos: () => request<UserPhoto[]>("/users/me/photos"),
   leaderboard: (tripId: string) =>
     request<LeaderboardEntry[]>(`/trips/${tripId}/leaderboard`),
   arrive: (tripId: string) =>
