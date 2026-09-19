@@ -81,9 +81,9 @@ export default function MissionsListPage() {
           <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
             <button
               type="button"
-              onClick={() => router.push(`/trips/${tripId}`)}
+              onClick={() => router.push("/")}
               className="box-border w-[34px] h-[34px] shrink-0 flex justify-center items-center bg-white/60 rounded-full"
-              aria-label="Back"
+              aria-label="Back to your trips"
             >
               <ArrowLeft className="w-[16px] h-[16px]" color="#4A3B2E" />
             </button>
