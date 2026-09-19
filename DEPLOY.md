@@ -116,6 +116,48 @@ Cold-start tip: hit the backend `/health` a minute before presenting to wake it.
 
 ---
 
+## Option S — Submission link (Render backend + Vercel frontend) ⭐ recommended
+
+Fastest **public HTTPS** link judges can hit, free, no card. Both ends are HTTPS
+so there's no mixed-content blocking (an `https://` frontend calling an `http://`
+IP backend would be blocked by browsers — this avoids that). ~15–20 min.
+
+**1. Backend → Render (Docker):** New → Web Service → this repo → Root Directory
+`backend` → Runtime **Docker**. Add env vars:
+```
+GEMINI_API_KEY=<your key>
+GEMINI_MODEL=gemini-3.5-flash
+SUPABASE_URL=<...>
+SUPABASE_SERVICE_ROLE_KEY=<...>
+ANTHROPIC_API_KEY=            # optional; empty = fallback missions
+# CORS_ORIGINS set in step 3 once you know the Vercel URL
+```
+Render sets `PORT` itself. Deploy → note URL (e.g. `https://sidequest-backend.onrender.com`)
+→ check `/health` (should show `"supabase": true` if wired).
+
+**2. Frontend → Vercel:** Import repo → Root Directory `frontend` → add env var
+`NEXT_PUBLIC_API_BASE_URL` = the Render backend URL (no trailing slash) → Deploy.
+Note URL (e.g. `https://sidequest.vercel.app`).
+
+**3. Wire CORS:** back on Render, set
+`CORS_ORIGINS=https://sidequest.vercel.app` (exact, https, **no trailing slash**)
+→ redeploy backend.
+
+**4. Kill cold starts (do this — judges hit it at random times):** Render free
+spins down after ~15 min idle (~50s cold start). Add a free pinger
+([cron-job.org](https://cron-job.org) / UptimeRobot) hitting
+`https://<backend>/health` every 10 min to keep it warm through judging.
+
+**Submission checklist:** `/health` ok · `CORS_ORIGINS` = exact Vercel URL ·
+frontend built with backend URL · full flow works cross-device · **Supabase not
+paused** (free tier pauses after ~1 week idle) · keep-warm pinger live.
+
+> Emergency fallback only: `docker compose --profile tunnel up` exposes a local
+> run via ngrok, but the URL is random per run, your laptop must stay on, and the
+> free tier adds an interstitial — not suitable for a submission window.
+
+---
+
 ## Option D — Fly.io (Docker, can stay warm)
 
 ```bash
