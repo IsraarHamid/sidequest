@@ -33,16 +33,20 @@ const rectToPct = (rect: DOMRect, clientX: number, clientY: number) => ({
   yPct: clampPct(((clientY - rect.top) / rect.height) * 100),
 });
 
+const CODE_LENGTH = 5;
+
 export const TicketDesigner = ({
   stickers,
   onStickersChange,
   bgColor,
   onBgColorChange,
+  inviteCode,
 }: {
   stickers: PlacedSticker[];
   onStickersChange: (stickers: PlacedSticker[]) => void;
   bgColor: string;
   onBgColorChange: (color: string) => void;
+  inviteCode?: string | null;
 }) => {
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ src: string; x: number; y: number; movingId: string | null } | null>(
@@ -156,11 +160,20 @@ export const TicketDesigner = ({
         <div className="box-border flex h-[120px] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-b-[25px] bg-white px-5">
           <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">INVITE CODE</span>
           <div className="flex items-end gap-1.5">
-            {[0, 0, 0, 0].map((_, i) => (
-              <span key={i} className="font-mono text-4xl leading-none font-medium text-[#4A3B2E]/20">
-                0
-              </span>
-            ))}
+            {Array.from({ length: CODE_LENGTH }).map((_, i) => {
+              const digit = inviteCode ? inviteCode[i] : undefined;
+              return (
+                <span
+                  key={i}
+                  className={cn(
+                    "font-mono text-4xl leading-none font-medium",
+                    digit ? "text-[#4A3B2E]" : "text-[#4A3B2E]/20",
+                  )}
+                >
+                  {digit ?? "0"}
+                </span>
+              );
+            })}
           </div>
         </div>
       </div>
