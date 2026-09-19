@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Flame } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { BottomNav } from "@/components/trip-quest/bottom-nav";
 import { MissionCard } from "@/components/trip-quest/mission-card";
 import { api, isAuthError, type Mission as ApiMission, type Trip } from "@/lib/api";
@@ -72,25 +72,38 @@ export default function MissionsListPage() {
   const solo = missions.filter((m) => m.type !== "group" && m.status !== "completed").map((m) => toCard(m, tripId));
   const group = missions.filter((m) => m.type === "group" && m.status !== "completed").map((m) => toCard(m, tripId));
   const completed = missions.filter((m) => m.status === "completed").map((m) => toCard(m, tripId));
+  const totalPoints = missions.reduce((sum, m) => sum + m.points, 0);
 
   return (
     <div className="min-h-svh w-full bg-[#F2F2ED] flex flex-col">
       <div className="mx-auto w-full max-w-[430px] flex flex-col flex-1">
         <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[20px] p-[16px_20px_20px_20px] justify-start items-start flex-1">
           <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
-            <div className="box-border w-fit shrink-0 h-fit flex flex-col gap-[2px] justify-start items-start">
-              <div className="text-[10px]/[normal] box-border text-[#8A7A69] font-['Geist_Mono',system-ui,sans-serif] font-normal tracking-[1px] text-left whitespace-nowrap">
-                {(trip?.destination || trip?.name || "").toUpperCase()}
+            <button
+              type="button"
+              onClick={() => router.push(`/trips/${tripId}`)}
+              className="box-border w-[34px] h-[34px] shrink-0 flex justify-center items-center bg-white/60 rounded-full"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-[16px] h-[16px]" color="#4A3B2E" />
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(`/trips/${tripId}/leaderboard`)}
+              className="box-border w-fit shrink-0 h-fit flex flex-row gap-[6px] p-[8px_16px] justify-start items-center bg-[#1C1A17] rounded-full"
+            >
+              <div className="text-[12px]/[normal] box-border text-white font-[Geist,system-ui,sans-serif] font-semibold text-left whitespace-nowrap">
+                Timeline
               </div>
-              <div className="text-[26px]/[normal] box-border text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-extrabold text-left whitespace-nowrap">
-                Missions
-              </div>
+            </button>
+          </div>
+
+          <div className="box-border w-full h-fit shrink-0 flex flex-col gap-0 justify-start items-center text-center">
+            <div className="text-[58px]/[1] box-border text-[#2B2620] font-hand [transform:rotate(-2deg)]">
+              Quests
             </div>
-            <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-[6px] p-[8px_12px] justify-start items-center bg-[#FBF7F0] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-lg">
-              <Flame className="w-[14px] h-[14px] shrink-0" color="#C8901A" />
-              <div className="text-[12px]/[normal] box-border text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-bold text-left whitespace-nowrap uppercase">
-                {trip?.status ?? "trip"}
-              </div>
+            <div className="text-[22px]/[1] box-border text-[#2B2620] font-hand [transform:rotate(-2deg)]">
+              {totalPoints}pts
             </div>
           </div>
 
