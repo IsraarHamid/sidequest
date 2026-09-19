@@ -42,7 +42,8 @@ const ticketDesignKey = (tripId: string) => `sidequest.ticketDesign.${tripId}`;
 export const CreateTripScreen = () => {
   const router = useRouter();
   const [step, setStep] = useState<"details" | "ticket">("details");
-  const [location, setLocation] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: getToday(), to: undefined });
   const [questType, setQuestType] = useState<QuestType | null>(null);
   const [stickers, setStickers] = useState<PlacedSticker[]>([]);
@@ -52,7 +53,7 @@ export const CreateTripScreen = () => {
 
   const handleContinue = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!location.trim()) return;
+    if (!origin.trim() || !destination.trim()) return;
     setStep("ticket");
   };
 
@@ -65,8 +66,10 @@ export const CreateTripScreen = () => {
       const fmt = (d?: Date) =>
         d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : undefined;
       const created = await api.createTrip({
-        name: location.trim(),
-        destination: location.trim(),
+        name: destination.trim(),
+        origin: origin.trim(),
+        destination: destination.trim(),
+        quest_type: questType ?? undefined,
         start_date: fmt(dateRange.from),
         end_date: fmt(dateRange.to),
       });
@@ -116,8 +119,10 @@ export const CreateTripScreen = () => {
             >
               <div className="flex flex-1 items-center justify-center">
                 <TripTicket
-                  location={location}
-                  onLocationChange={setLocation}
+                  origin={origin}
+                  onOriginChange={setOrigin}
+                  destination={destination}
+                  onDestinationChange={setDestination}
                   dateRange={dateRange}
                   onDateRangeChange={setDateRange}
                   questType={questType}

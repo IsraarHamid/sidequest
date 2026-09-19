@@ -96,7 +96,9 @@ Entities and key fields. Exact column types live in migrations; this is the shar
 
 - **user**: `id`, `email`, `display_name`, `avatar_url`, `created_at`
 - **user_preferences**: `user_id`, `interests[]`, `diet`, `adventure_level`, `budget`, `free_text` — feeds the AI
-- **trip** (a.k.a. group/game): `id`, `name`, `origin`, `destination`, `start_time`, `status` (`draft|active|arrived|ended`), `join_code`, `created_by`
+- **trip** (a.k.a. group/game): `id`, `name`, `origin` (start destination), `destination` (end destination), `quest_type` (`solo|together` — shapes the mission mix), `start_time`, `status` (`draft|active|arrived|ended`), `join_code`, `created_by`
+  - `origin` + `destination` are the journey's start/end places, used for route-aware mission & place discovery.
+  - `quest_type` needs the `supabase/migrations/0001_trip_quest_type.sql` migration; the backend runs fine without it (quest type just isn't persisted).
 - **trip_member**: `trip_id`, `user_id`, `role` (`host|player`), `total_points`
 - **mission**: `id`, `trip_id`, `assignee_user_id` (null = group mission), `title`, `description`, `type` (`solo|group|secret`), `rarity` (`common|rare|legendary`), `points`, `is_secret`, `status` (`open|completed`), `business_id` (nullable), `generated_by` (`ai|fallback`)
 - **mission_completion**: `id`, `mission_id`, `user_id`, `photo_url` (nullable), `completed_at`, `is_first` (first-to-finish bonus flag)

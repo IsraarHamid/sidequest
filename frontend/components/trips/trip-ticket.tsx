@@ -209,16 +209,23 @@ const QuestTypeToggle = ({
   );
 };
 
+const placeInputClassName =
+  "w-full border-0 bg-transparent p-0 font-mono text-[15px] font-medium text-[#4A3B2E] caret-[#4A3B2E] outline-none placeholder:text-[#4A3B2E]/20 selection:bg-[#DDD2C0] selection:text-[#4A3B2E] focus-visible:outline-none";
+
 export const TripTicket = ({
-  location,
-  onLocationChange,
+  origin,
+  onOriginChange,
+  destination,
+  onDestinationChange,
   dateRange,
   onDateRangeChange,
   questType,
   onQuestTypeChange,
 }: {
-  location: string;
-  onLocationChange: (value: string) => void;
+  origin: string;
+  onOriginChange: (value: string) => void;
+  destination: string;
+  onDestinationChange: (value: string) => void;
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
   questType: QuestType | null;
@@ -226,20 +233,37 @@ export const TripTicket = ({
 }) => {
   return (
     <div className="login-rise relative flex w-[254px] max-w-full shrink-0 flex-col" aria-label="Trip ticket">
-      <div className="box-border flex h-[262px] w-full flex-col items-center justify-end gap-6 overflow-hidden rounded-[25px] bg-white pt-[61px] pr-[35px] pb-[19px] pl-5">
+      <div className="box-border flex h-[262px] w-full flex-col items-center justify-end gap-4 overflow-hidden rounded-[25px] bg-white pt-[40px] pr-[35px] pb-[19px] pl-5">
         <div className="flex w-full flex-col">
-          <label htmlFor="trip-location" className="flex flex-col">
-            <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">LOCATION</span>
+          <label htmlFor="trip-origin" className="flex flex-col">
+            <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">FROM</span>
             <input
-              id="trip-location"
+              id="trip-origin"
               type="text"
               required
-              value={location}
-              placeholder="ENTER LOCATION"
+              value={origin}
+              placeholder="START LOCATION"
               spellCheck={false}
               autoComplete="off"
-              onChange={(event) => onLocationChange(event.target.value)}
-              className="w-full border-0 bg-transparent p-0 font-mono text-[15px] font-medium text-[#4A3B2E] caret-[#4A3B2E] outline-none placeholder:text-[#4A3B2E]/20 selection:bg-[#DDD2C0] selection:text-[#4A3B2E] focus-visible:outline-none"
+              onChange={(event) => onOriginChange(event.target.value)}
+              className={placeInputClassName}
+            />
+          </label>
+        </div>
+
+        <div className="flex w-full flex-col">
+          <label htmlFor="trip-destination" className="flex flex-col">
+            <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">TO</span>
+            <input
+              id="trip-destination"
+              type="text"
+              required
+              value={destination}
+              placeholder="END LOCATION"
+              spellCheck={false}
+              autoComplete="off"
+              onChange={(event) => onDestinationChange(event.target.value)}
+              className={placeInputClassName}
             />
           </label>
         </div>
