@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { cn } from "cn";
 import { TripTicket, type QuestType } from "@/components/trips/trip-ticket";
 import { TicketDesigner, type PlacedSticker } from "@/components/trips/ticket-designer";
-import { api, ensureUser, type Trip } from "@/lib/api";
+import { api, ensureUser, joinLink, type Trip } from "@/lib/api";
 
 const actionClassName = cn(
   "box-border flex h-12 w-full shrink-0 flex-row items-center justify-center rounded-full px-8",
@@ -50,6 +50,7 @@ export const CreateTripScreen = () => {
   const [bgColor, setBgColor] = useState("#FFFFFF");
   const [created, setCreated] = useState<Trip | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [shared, setShared] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Create the trip up front (on Continue) so the real, server-generated
@@ -85,7 +86,7 @@ export const CreateTripScreen = () => {
     }
   };
 
-  const handleCreateInvite = async () => {
+  const handleShareInvite = async () => {
     if (submitting || !created) return;
     setSubmitting(true);
     setError(null);
@@ -97,7 +98,24 @@ export const CreateTripScreen = () => {
     } catch {
       /* ignore (private mode etc.) */
     }
-    router.push(`/trips/${created.id}/preferences`);
+    try {
+      const url = joinLink(created.join_code);
+      if (navigator.share) {
+        await navigator.share({
+          title: `${created.name} invite`,
+          text: `Join my SideQuest trip with code ${created.join_code}.`,
+          url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShared(true);
+      }
+      router.push(`/trips/${created.id}/preferences`);
+    } catch {
+      setError("Couldn't share the invite. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -167,14 +185,14 @@ export const CreateTripScreen = () => {
                 <button
                   type="button"
                   disabled={submitting}
-                  onClick={handleCreateInvite}
+                  onClick={handleShareInvite}
                   className={cn(
                     actionClassName,
                     "bg-[#121212] disabled:opacity-60",
                     "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
                   )}
                 >
-                  {submitting ? "Creating…" : "Create invite"}
+                  {submitting ? "Sharing…" : shared ? "Invite shared" : "Share invite"}
                 </button>
               </div>
             </div>
