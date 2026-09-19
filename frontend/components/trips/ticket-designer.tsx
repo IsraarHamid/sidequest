@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "cn";
-import { STICKERS } from "@/lib/stickers";
+import { Wordmark } from "@/components/ui/wordmark";
+import { STICKERS, shuffleStickers } from "@/lib/stickers";
 
 export type PlacedSticker = { id: string; src: string; xPct: number; yPct: number };
 
@@ -49,6 +50,14 @@ export const TicketDesigner = ({
   );
   const idPrefix = useId();
   const nextIndex = useRef(0);
+
+  // ponytail: shuffled client-side only (not at module scope) so SSR/hydration
+  // markup matches; the marquee re-orders itself right after mount instead.
+  const [pickerStickers, setPickerStickers] = useState(STICKERS);
+  useEffect(() => {
+    setPickerStickers(shuffleStickers(STICKERS));
+  }, []);
+  const pickerTrack = [...pickerStickers, ...pickerStickers];
 
   const fgColor = getTicketFgColor(bgColor);
 
@@ -98,37 +107,32 @@ export const TicketDesigner = ({
   return (
     <div className="flex w-full flex-col items-center gap-6">
       <div
-        className="no-scrollbar flex w-full gap-6 overflow-x-auto px-8 py-2 touch-pan-x"
+        className="no-scrollbar w-full overflow-hidden px-8 py-2"
         aria-label="Sticker picker — drag a sticker onto the ticket"
       >
-        {STICKERS.map((src) => (
-          <img
-            key={src}
-            src={src}
-            alt=""
-            draggable={false}
-            onPointerDown={(event) => beginDrag(event, src, null)}
-            onPointerMove={handleMove}
-            onPointerUp={handleEnd}
-            className="h-18 w-18 shrink-0 cursor-grab touch-none object-contain select-none active:cursor-grabbing"
-          />
-        ))}
+        <div className="sticker-marquee flex w-max gap-6">
+          {pickerTrack.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt=""
+              draggable={false}
+              onPointerDown={(event) => beginDrag(event, src, null)}
+              onPointerMove={handleMove}
+              onPointerUp={handleEnd}
+              className="h-18 w-18 shrink-0 cursor-grab touch-none object-contain select-none active:cursor-grabbing"
+            />
+          ))}
+        </div>
       </div>
 
       <div className="flex w-[254px] max-w-full shrink-0 flex-col">
         <div
           ref={dropZoneRef}
-          className="relative flex h-[262px] w-full items-center justify-center overflow-hidden rounded-t-[25px] transition-colors duration-200"
+          className="@container relative flex h-[262px] w-full items-center justify-center overflow-hidden rounded-t-[25px] transition-colors duration-200"
           style={{ backgroundColor: bgColor }}
         >
-          <div
-            className="px-5 text-center font-sans text-[46px] leading-[0.95] font-black uppercase"
-            style={{ color: fgColor }}
-          >
-            Side
-            <br />
-            Quest
-          </div>
+          <Wordmark className="px-5 text-center" style={{ color: fgColor }} />
           {stickers.map((sticker) => (
             <img
               key={sticker.id}
@@ -138,13 +142,12 @@ export const TicketDesigner = ({
               onPointerDown={(event) => beginDrag(event, sticker.src, sticker.id)}
               onPointerMove={handleMove}
               onPointerUp={handleEnd}
-              className="absolute cursor-grab touch-none object-contain select-none active:cursor-grabbing"
+              className="sticker-drop absolute cursor-grab touch-none object-contain select-none active:cursor-grabbing"
               style={{
                 left: `${sticker.xPct}%`,
                 top: `${sticker.yPct}%`,
                 width: STICKER_SIZE,
                 height: STICKER_SIZE,
-                transform: "translate(-50%, -50%)",
               }}
             />
           ))}
