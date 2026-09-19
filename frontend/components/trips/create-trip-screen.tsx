@@ -69,6 +69,7 @@ export const CreateTripScreen = () => {
         name: endLocation.trim(),
         origin: startLocation.trim(),
         destination: endLocation.trim(),
+        quest_type: questType ?? undefined,
         start_date: fmt(dateRange.from),
         end_date: fmt(dateRange.to),
       });

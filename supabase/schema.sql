@@ -54,9 +54,10 @@ create table if not exists businesses (
 create table if not exists trips (
     id           uuid primary key default gen_random_uuid(),
     name         text not null,
-    origin       text,
-    destination  text,
+    origin       text,                          -- start destination (journey planning)
+    destination  text,                          -- end destination (journey planning)
     vibe         text,
+    quest_type   text check (quest_type in ('solo', 'together')),
     status       trip_status not null default 'draft',
     join_code    text unique not null,
     created_by   uuid not null references users(id) on delete cascade,

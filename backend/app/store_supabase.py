@@ -152,6 +152,24 @@ def delete_user(user_id: str) -> None:
 
 
 # ---- Trips ----
+# quest_type is a newer column; tolerate a DB that hasn't run the migration yet
+# (supabase/migrations/0001_trip_quest_type.sql). Checked once and cached.
+_HAS_QUEST_TYPE: bool | None = None
+
+
+def _trips_has_quest_type() -> bool:
+    global _HAS_QUEST_TYPE
+    if _HAS_QUEST_TYPE is None:
+        try:
+            _sb().table("trips").select("quest_type").limit(1).execute()
+            _HAS_QUEST_TYPE = True
+        except Exception:  # noqa: BLE001 - column missing until migration runs
+            _HAS_QUEST_TYPE = False
+            print("[store] trips.quest_type column missing — run "
+                  "supabase/migrations/0001_trip_quest_type.sql to persist quest type")
+    return _HAS_QUEST_TYPE
+
+
 def create_trip(created_by: str, data: dict) -> dict:
     row = _clean({
         "id": _id(),
@@ -159,6 +177,7 @@ def create_trip(created_by: str, data: dict) -> dict:
         "origin": data.get("origin"),
         "destination": data.get("destination"),
         "vibe": data.get("vibe"),
+        "quest_type": data.get("quest_type"),
         "status": "draft",
         "join_code": _unique_join_code(),
         "created_by": created_by,
@@ -166,6 +185,8 @@ def create_trip(created_by: str, data: dict) -> dict:
         "end_date": data.get("end_date"),
         "ends_at": data.get("ends_at"),
     })
+    if not _trips_has_quest_type():
+        row.pop("quest_type", None)
     _sb().table("trips").insert(row).execute()
     _add_member(row["id"], created_by, role="host")
     return row

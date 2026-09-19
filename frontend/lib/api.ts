@@ -108,6 +108,7 @@ export type Trip = {
   origin?: string | null;
   destination?: string | null;
   vibe?: string | null;
+  quest_type?: "solo" | "together" | null;
   status: "draft" | "active" | "arrived" | "ended";
   join_code: string;
   created_by: string;
@@ -262,6 +263,7 @@ export const api = {
     origin?: string;
     destination?: string;
     vibe?: string;
+    quest_type?: "solo" | "together";
     start_date?: string;
     end_date?: string;
     ends_at?: string;

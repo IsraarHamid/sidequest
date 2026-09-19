@@ -16,6 +16,19 @@ def _trip_out(trip: dict) -> dict:
     return {**trip, "members": store.get_members(trip["id"])}
 
 
+def _counts_for_quest_type(quest_type: str | None) -> dict:
+    """Mission mix per quest type.
+    solo     -> mostly individual challenges, no group mission.
+    together -> fewer solo, more shared/group missions.
+    default  -> balanced deck.
+    """
+    if quest_type == "solo":
+        return {"solo_per_player": 4, "group": 0, "secret_per_player": 1}
+    if quest_type == "together":
+        return {"solo_per_player": 2, "group": 3, "secret_per_player": 1}
+    return {"solo_per_player": 2, "group": 1, "secret_per_player": 1}
+
+
 @router.get("", response_model=list[TripOut])
 def my_trips(current=Depends(get_current_user)):
     """All trips the current user belongs to (for the dashboard)."""
@@ -67,7 +80,10 @@ def start_trip(trip_id: str, current=Depends(get_current_user)):
     )
     name_to_business_id = store.save_businesses(places)
 
-    mission_dicts = generate_missions(trip, players, places=places)
+    # Quest type shapes the mission mix: SOLO = mostly per-player challenges,
+    # TOGETHER = more shared/group missions. Defaults to a balanced deck.
+    counts = _counts_for_quest_type(trip.get("quest_type"))
+    mission_dicts = generate_missions(trip, players, counts=counts, places=places)
 
     # Link missions tagged with a real place to its business record
     for m in mission_dicts:

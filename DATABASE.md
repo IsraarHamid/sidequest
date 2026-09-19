@@ -82,6 +82,7 @@ erDiagram
         text origin
         text destination
         text vibe
+        text quest_type
         trip_status status
         text join_code UK
         uuid created_by FK
@@ -264,9 +265,10 @@ create table user_preferences (
 create table trips (
     id           uuid primary key default gen_random_uuid(),
     name         text not null,
-    origin       text,
-    destination  text,
+    origin       text,                          -- start destination (journey planning)
+    destination  text,                          -- end destination (journey planning)
     vibe         text,
+    quest_type   text check (quest_type in ('solo', 'together')),
     status       trip_status not null default 'draft',
     join_code    text unique not null,
     created_by   uuid not null references users(id) on delete cascade,

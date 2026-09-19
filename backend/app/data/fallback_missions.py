@@ -42,6 +42,7 @@ def build_fallback_missions(trip: dict, players: list[dict], counts: dict,
     out: list[dict] = []
     solo_n = counts.get("solo_per_player", 2)
     secret_n = counts.get("secret_per_player", 1)
+    group_n = counts.get("group", 1)
     places = places or []
 
     for p in players:
@@ -70,14 +71,17 @@ def build_fallback_missions(trip: dict, players: list[dict], counts: dict,
                 "time_limit_minutes": None, "generated_by": "fallback",
             })
 
-    title, desc = random.choice(_GROUP)
-    out.append({
-        "assignee_user_id": None,
-        "title": title.format(dest=dest), "description": desc.format(dest=dest),
-        "type": "group", "rarity": "legendary",
-        "points": RARITY_POINTS["legendary"], "is_secret": False,
-        "time_limit_minutes": None, "generated_by": "fallback",
-    })
+    # Group missions — count driven by quest type (0 for solo, more for together).
+    if group_n > 0:
+        pool = _GROUP * (group_n // len(_GROUP) + 1)
+        for title, desc in random.sample(pool, min(group_n, len(pool))):
+            out.append({
+                "assignee_user_id": None,
+                "title": title.format(dest=dest), "description": desc.format(dest=dest),
+                "type": "group", "rarity": "legendary",
+                "points": RARITY_POINTS["legendary"], "is_secret": False,
+                "time_limit_minutes": None, "generated_by": "fallback",
+            })
 
     for place, player in zip(places[:2], players):
         out.append({
