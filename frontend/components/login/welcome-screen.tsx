@@ -27,7 +27,7 @@ const AuthButton = ({
 }: {
   label: string;
   variant: AuthVariant;
-  onClick: () => void;
+  onClick?: () => void;
   disabled?: boolean;
 }) => (
   <button
@@ -39,7 +39,7 @@ const AuthButton = ({
       "flex h-12 w-full items-center justify-center rounded-full font-sans font-semibold outline-none",
       "transition-[transform,box-shadow] duration-[160ms] [transition-timing-function:cubic-bezier(0.215,0.61,0.355,1)]",
       "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#121212]",
-      "active:scale-[0.97] disabled:opacity-60",
+      "active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100",
       "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
       variant === "create" && "bg-[#121212] px-8 text-[15px] text-[#FBF7F0]",
       variant === "google" &&
@@ -142,7 +142,6 @@ export const WelcomeScreen = () => {
   const [emailSheetOpen, setEmailSheetOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
 
   // Only clear the session on an explicit logout (/login?logout=1). Arriving here
   // any other way (e.g. a transient redirect) must NOT log the user out.
@@ -181,21 +180,8 @@ export const WelcomeScreen = () => {
     setTimeout(() => router.push("/"), 650);
   };
 
-  // Google/Apple are owned by another teammate and still in development.
-  // Buttons stay in the UI; for now they show a note instead of signing in.
-  const handleGoogle = () => {
-    setError(null);
-    setInfo("Google sign-in is coming soon — use email for now.");
-  };
-
-  const handleApple = () => {
-    setError(null);
-    setInfo("Apple sign-in is coming soon — use email for now.");
-  };
-
   const handleOpenEmailSheet = () => {
     setError(null);
-    setInfo(null);
     setEmailSheetOpen(true);
   };
 
@@ -229,12 +215,10 @@ export const WelcomeScreen = () => {
   const handleToggleMode = () => {
     setMode(mode === "register" ? "signin" : "register");
     setError(null);
-    setInfo(null);
   };
 
   const handleSubmit = async () => {
     setError(null);
-    setInfo(null);
     if (!email.trim() || !password) {
       setError("Enter your email and password.");
       return;
@@ -280,15 +264,17 @@ export const WelcomeScreen = () => {
                     onClick={handleOpenEmailSheet}
                   />
 
-                  {/* Third-party sign-in (in development — kept for the teammate to wire) */}
+                  <p className="text-center font-sans text-[11px] text-[#8A7A69]">Coming soon</p>
                   <AuthButton
                     variant="google"
                     label="Continue with Google"
-                    onClick={handleGoogle}
+                    disabled
                   />
-                  <AuthButton variant="apple" label="Continue with Apple" onClick={handleApple} />
-
-                  {info && <p className="font-sans text-[13px] text-[#8A7A69]">{info}</p>}
+                  <AuthButton
+                    variant="apple"
+                    label="Continue with Apple"
+                    disabled
+                  />
                 </div>
               )}
             </div>
