@@ -29,3 +29,21 @@ services:
       - PORT=3000
     depends_on:
       - backend
+
+  # Public tunnel via ngrok (opt-in). Needs NGROK_AUTHTOKEN in a root `.env`
+  # (see .env.example). You get a random https://xxxx.ngrok-free.app URL each run;
+  # find it at http://localhost:4040 or `docker compose logs ngrok`.
+  #   docker compose --profile tunnel up
+  # Defaults to exposing the backend API; set NGROK_TARGET=frontend:3000 for the web app.
+  ngrok:
+    image: ngrok/ngrok:latest
+    profiles: ["tunnel"]
+    command: ["http", "${NGROK_TARGET:-backend:8000}"]
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped

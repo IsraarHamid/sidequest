@@ -253,7 +253,7 @@ code fences.
   "missions": [
     {
       "member": string,
-      "title": string,                // mission name, make it fun
+      "title": string,                // mission name, make it fun and quirky BUT KEEP IT TO 10 WORDS MAX!
       "brief": string,                // 1-2 sentences, in the voice of a mission brief
       "total_points": number,
       "checkpoints": [
