@@ -50,7 +50,7 @@ source .venv/bin/activate
 uvicorn app.main:app --reload      # http://localhost:8000  (/docs, /health)
 ```
 Optional keys in `backend/.env`: `GEMINI_API_KEY` (real places + rich plan),
-`ANTHROPIC_API_KEY` (Claude missions). Without keys it uses the fallback deck.
+`REPLICATE_API_KEY` (Claude missions via Replicate). Without keys it uses the fallback deck.
 
 **Frontend**:
 ```bash

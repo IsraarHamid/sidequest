@@ -63,7 +63,7 @@
 | Auth | **Supabase Auth** | Firebase Auth, custom JWT | Anonymous + email; JWT verified in API |
 | Real-time | **Supabase Realtime** | Firebase, WebSockets, polling | For live leaderboard/mission status |
 | File/photo storage | **Supabase Storage** ✅ *confirmed* | Cloudinary (free tier — only if heavy image transforms needed), Firebase Storage | Mission checkpoint photos — see storage note below |
-| AI / mission engine | **Claude `claude-sonnet-5`** (Anthropic API) | — | Creative mission writing. Server-side only (§8) |
+| AI / mission engine | **Claude `anthropic/claude-sonnet-5`** via **Replicate** | Anthropic API direct | Runs `mission_generator.md`. Server-side only (§8) |
 | Real-place discovery | **Gemini** (`services/places.py`) — plain mode (free) by default; Google Maps grounding opt-in (needs billing) | OpenStreetMap Overpass (free, no ratings) | Optional. Real businesses along the route → mission checkpoints. `[]` if `GEMINI_API_KEY` unset. |
 | Hosting (API) | **Render / Railway free tier** or **Fly.io** | Any container host | FastAPI needs a Python host (not Vercel-static) |
 | Env / secrets | **`.env` + host env vars** | — | Never commit secrets |
@@ -126,7 +126,7 @@ backend/
 │   ├── models/            # Pydantic schemas (request/response)
 │   ├── routers/           # one file per resource (trips, missions, ...)
 │   ├── services/          # business logic (mission_engine, scoring, ...)
-│   │   └── ai.py          # Claude mission-generation (the contract in §8)
+│   │   └── ai.py          # Replicate mission-generation (the contract in §8)
 │   └── data/
 │       └── fallback_missions.py  # hardcoded deck if AI fails (demo safety)
 ├── requirements.txt
@@ -180,7 +180,14 @@ Not exhaustive — a shared starting point. All return JSON; auth via `Authoriza
 
 ## 8. AI mission engine — the contract (critical)
 
-Lives in `services/ai.py`. **Server-side only** (Claude key never reaches the client).
+Lives in `services/ai.py`. **Server-side only** (the Replicate token never reaches the client).
+
+> **Current implementation:** the prompt sent to Claude is `backend/mission_generator.md`
+> (route legs → per-member checkpoints → shared checkpoints → scoring), not the shape
+> below. `ai.py` flattens that plan into the mission dicts in this section, so the store
+> and API contract is unchanged; `generate_trip_plan()` returns the unflattened plan.
+> Two consequences: missions are place-based (`business_name` = the checkpoint) and the
+> AI deck has no `secret` or timed missions — only the fallback deck still produces those.
 
 **Input** → assembled by the backend:
 ```json
@@ -277,9 +284,9 @@ SUPABASE_URL=
 SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=   # server-side only, never expose
 
-# Anthropic / Claude
-ANTHROPIC_API_KEY=
-CLAUDE_MODEL=claude-sonnet-5
+# Replicate (mission engine — runs mission_generator.md on Claude)
+REPLICATE_API_KEY=
+REPLICATE_MODEL=anthropic/claude-sonnet-5
 
 # Gemini (real-place discovery — optional)
 GEMINI_API_KEY=
