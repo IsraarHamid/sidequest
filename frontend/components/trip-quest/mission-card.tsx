@@ -52,7 +52,7 @@ export function MissionCard({ mission, tripId }: { mission: Mission; tripId: str
             {mission.kindLabel}
           </div>
         </div>
-        <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-0 p-[6px_10px] justify-start items-start bg-[#F4EFE4] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-lg">
+        <div className="box-border w-fit shrink-0 h-fit flex flex-row gap-0 p-[6px_10px] justify-start items-start bg-[#F2F2ED] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-lg">
           <div className="text-[12px]/[normal] box-border text-[#C8901A] font-[Geist,system-ui,sans-serif] font-bold text-left whitespace-nowrap">
             {mission.points} pts
           </div>
@@ -78,7 +78,7 @@ export function MissionCard({ mission, tripId }: { mission: Mission; tripId: str
         )}
         <div
           className={`box-border w-fit shrink-0 h-fit flex flex-row gap-[5px] p-[6px_11px] justify-start items-center rounded-lg ${
-            isCompleted ? "bg-[#3E6B4A1F]" : "bg-[#F4EFE4]"
+            isCompleted ? "bg-[#3E6B4A1F]" : "bg-[#F2F2ED]"
           }`}
         >
           {isCompleted ? (

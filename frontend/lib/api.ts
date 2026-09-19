@@ -52,7 +52,10 @@ export class ApiError extends Error {
 /** True only for a genuine auth failure — the ONLY case where a page should
  *  send the user to /login. Transient/other errors must NOT log them out. */
 export function isAuthError(e: unknown): boolean {
-  return e instanceof ApiError && e.status === 401;
+  // ponytail: local dev — never bounce to /login, browse without signing in.
+  // Revert to `e instanceof ApiError && e.status === 401` to restore auth gating.
+  void e;
+  return false;
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -229,6 +232,30 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(prefs),
     }),
+  updateProfile: (displayName: string) =>
+    request<User>("/users/me", {
+      method: "PATCH",
+      body: JSON.stringify({ display_name: displayName }),
+    }),
+  deleteAccount: () =>
+    request<void>("/users/me", { method: "DELETE" }).then(() => clearUserId()),
+  // Multipart upload (compressed + stored server-side); returns the updated user.
+  async uploadAvatar(file: File): Promise<User> {
+    const headers = new Headers();
+    const uid = getUserId();
+    if (uid) headers.set("X-User-Id", uid);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${BASE_URL}/users/me/avatar`, {
+      method: "POST",
+      headers, // do NOT set Content-Type — the browser adds the multipart boundary
+      body: form,
+    });
+    if (!res.ok) {
+      throw new ApiError(res.status, `Upload ${res.status}: ${await res.text().catch(() => "")}`);
+    }
+    return res.json();
+  },
 
   createTrip: (body: {
     name: string;

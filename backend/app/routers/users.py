@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app import store
 from app.deps import get_current_user
-from app.models import AnonIn, LoginIn, Preferences, RegisterIn, UserOut
+from app.models import AnonIn, LoginIn, Preferences, RegisterIn, UpdateProfileIn, UserOut
 from app.security import verify_password
+from app.services.storage import storage_enabled, upload_avatar
 
 router = APIRouter(tags=["users"])
 
@@ -52,6 +53,34 @@ def me(current=Depends(get_current_user)):
 @router.put("/users/me/preferences", response_model=UserOut)
 def set_preferences(prefs: Preferences, current=Depends(get_current_user)):
     return store.set_preferences(current["id"], prefs.model_dump())
+
+
+@router.patch("/users/me", response_model=UserOut)
+def update_profile(body: UpdateProfileIn, current=Depends(get_current_user)):
+    return store.update_user(current["id"], display_name=body.display_name)
+
+
+@router.post("/users/me/avatar", response_model=UserOut)
+async def upload_avatar_photo(file: UploadFile = File(...), current=Depends(get_current_user)):
+    """Upload a profile photo -> Supabase Storage, sets avatar_url."""
+    if not storage_enabled():
+        raise HTTPException(status_code=503, detail="Photo storage needs Supabase configured")
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image uploads are allowed")
+
+    data = await file.read()
+    if len(data) > 40 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Image too large (max 40 MB)")
+    try:
+        result = upload_avatar(user_id=current["id"], data=data, content_type=file.content_type)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"Upload failed: {exc}")
+    return store.update_user(current["id"], avatar_url=result["url"])
+
+
+@router.delete("/users/me", status_code=204)
+def delete_account(current=Depends(get_current_user)):
+    store.delete_user(current["id"])
 
 
 @router.get("/users/me/photos")

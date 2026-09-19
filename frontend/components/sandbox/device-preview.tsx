@@ -52,7 +52,7 @@ export const DevicePreview = ({
         />
 
         <div
-          className="relative overflow-hidden rounded-[37px] bg-[#F4EFE4]"
+          className="relative overflow-hidden rounded-[37px] bg-[#F2F2ED]"
           style={{
             width: DEVICE_SCREEN.width,
             height: DEVICE_SCREEN.height,
@@ -67,7 +67,7 @@ export const DevicePreview = ({
             ref={iframeRef}
             src={src}
             title={`${label} preview`}
-            className="h-full w-full border-0 bg-[#F4EFE4]"
+            className="h-full w-full border-0 bg-[#F2F2ED]"
             sandbox="allow-scripts allow-same-origin allow-forms"
           />
 

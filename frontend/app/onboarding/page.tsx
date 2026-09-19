@@ -7,7 +7,7 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-svh w-full bg-[#F4EFE4]">
+    <div className="min-h-svh w-full bg-[#F2F2ED]">
       <div className="mx-auto w-full max-w-[430px]">
         <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[26px] p-[20px_20px_24px_20px] justify-start items-start">
           <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[14px] p-[6px_0px_0px_0px] justify-start items-start">

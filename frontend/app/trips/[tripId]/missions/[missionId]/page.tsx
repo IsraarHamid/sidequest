@@ -71,14 +71,14 @@ export default function MissionDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-svh w-full bg-[#F4EFE4] flex items-center justify-center">
+      <div className="min-h-svh w-full bg-[#F2F2ED] flex items-center justify-center">
         <p className="font-sans text-[15px] text-[#8A7A69]">Loading…</p>
       </div>
     );
   }
   if (!mission) {
     return (
-      <div className="min-h-svh w-full bg-[#F4EFE4] flex items-center justify-center">
+      <div className="min-h-svh w-full bg-[#F2F2ED] flex items-center justify-center">
         <p className="font-sans text-[15px] text-[#8A7A69]">Mission not found.</p>
       </div>
     );
@@ -90,7 +90,7 @@ export default function MissionDetailPage() {
   const accent = isGroup ? "#3E6B4A" : "#E8B62C";
 
   return (
-    <div className="min-h-svh w-full bg-[#F4EFE4]">
+    <div className="min-h-svh w-full bg-[#F2F2ED]">
       <div className="mx-auto w-full max-w-[430px]">
         <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[20px] p-[16px_20px_24px_20px] justify-start items-start">
           <PageHeader title="Mission" />
@@ -106,7 +106,7 @@ export default function MissionDetailPage() {
               <img src={photoUrl} alt="Your proof" className="absolute inset-0 h-full w-full object-cover" />
             ) : (
               <>
-                <div className="box-border w-[52px] h-[52px] shrink-0 flex flex-row justify-center items-center bg-[#F4EFE4] rounded-full">
+                <div className="box-border w-[52px] h-[52px] shrink-0 flex flex-row justify-center items-center bg-[#F2F2ED] rounded-full">
                   <Camera className="w-[24px] h-[24px] shrink-0" color="#8A7A69" />
                 </div>
                 <div className="text-[14px] box-border text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-semibold">
@@ -133,7 +133,7 @@ export default function MissionDetailPage() {
             <div className="text-[22px]/[26px] box-border w-[250px] shrink-0 text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-extrabold text-left">
               {mission.title}
             </div>
-            <div className="box-border w-fit shrink-0 h-fit flex flex-row p-[8px_12px] bg-[#F4EFE4] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-lg">
+            <div className="box-border w-fit shrink-0 h-fit flex flex-row p-[8px_12px] bg-[#F2F2ED] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-lg">
               <div className="text-[13px] box-border text-[#C8901A] font-[Geist,system-ui,sans-serif] font-bold whitespace-nowrap">
                 {mission.points} pts
               </div>

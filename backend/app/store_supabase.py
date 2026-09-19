@@ -134,6 +134,23 @@ def set_preferences(user_id: str, prefs: dict) -> dict:
     return get_user(user_id)
 
 
+def update_user(user_id: str, *, display_name: str | None = None,
+                avatar_url: str | None = None) -> dict:
+    patch = {}
+    if display_name is not None:
+        patch["display_name"] = display_name
+        patch["initials"] = _initials(display_name)
+    if avatar_url is not None:
+        patch["avatar_url"] = avatar_url
+    if patch:
+        _sb().table("users").update(patch).eq("id", user_id).execute()
+    return get_user(user_id)
+
+
+def delete_user(user_id: str) -> None:
+    _sb().table("users").delete().eq("id", user_id).execute()
+
+
 # ---- Trips ----
 def create_trip(created_by: str, data: dict) -> dict:
     row = _clean({

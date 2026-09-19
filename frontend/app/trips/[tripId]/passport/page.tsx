@@ -41,14 +41,14 @@ export default function PassportPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-svh w-full bg-[#F4EFE4] flex items-center justify-center">
+      <div className="min-h-svh w-full bg-[#F2F2ED] flex items-center justify-center">
         <p className="font-sans text-[15px] text-[#8A7A69]">Loading passport…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-svh w-full bg-[#F4EFE4] flex flex-col">
+    <div className="min-h-svh w-full bg-[#F2F2ED] flex flex-col">
       <div className="mx-auto w-full max-w-[430px] flex flex-col flex-1">
         <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[20px] p-[16px_20px_20px_20px] justify-start items-start flex-1">
           <div className="text-[10px] box-border text-[#8A7A69] font-['Geist_Mono',system-ui,sans-serif] tracking-[1px]">YOUR TRAVEL PASSPORT</div>

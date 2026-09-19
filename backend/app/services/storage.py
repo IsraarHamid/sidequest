@@ -58,3 +58,24 @@ def upload_mission_photo(user_id: str, trip_id: str, mission_id: str,
     )
     public = sb.storage.from_(bucket).get_public_url(path)
     return {"path": path, "url": public, "bytes": len(data)}
+
+
+def upload_avatar(user_id: str, data: bytes, content_type: str | None) -> dict:
+    """Upload a profile photo and return {path, url}."""
+    sb = get_supabase()
+    if sb is None:
+        raise RuntimeError("Storage requires Supabase configuration")
+    bucket = get_settings().storage_bucket
+    _ensure_bucket(sb, bucket)
+
+    data, comp_ext, comp_ct = compress_image(data, content_type)
+    content_type = comp_ct or content_type
+    ext = comp_ext or _EXT.get((content_type or "").lower(), "jpg")
+
+    path = f"{user_id}/avatar/{uuid.uuid4().hex}.{ext}"
+    sb.storage.from_(bucket).upload(
+        path, data,
+        {"content-type": content_type or "image/jpeg", "upsert": "true"},
+    )
+    public = sb.storage.from_(bucket).get_public_url(path)
+    return {"path": path, "url": public, "bytes": len(data)}

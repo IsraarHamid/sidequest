@@ -29,7 +29,7 @@ export default function VoteHubPage() {
   }, [tripId, router]);
 
   return (
-    <div className="min-h-svh w-full bg-[#F4EFE4] flex flex-col">
+    <div className="min-h-svh w-full bg-[#F2F2ED] flex flex-col">
       <div className="mx-auto w-full max-w-[430px] flex flex-col flex-1">
         <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[18px] p-[16px_20px_20px_20px] justify-start items-start flex-1">
           <div className="box-border w-full flex flex-col gap-[2px]">

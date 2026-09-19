@@ -63,7 +63,7 @@ export const deriveTitleColor = (coverHex: string) => {
   const hsl = { h: 0, s: 0, l: 0 };
   color.getHSL(hsl);
 
-  if (hsl.l < 0.16) return "#F4EFE4";
+  if (hsl.l < 0.16) return "#F2F2ED";
   if (hsl.l > 0.62) return "#1F1A16";
 
   color.setHSL(hsl.h, Math.min(0.78, hsl.s + 0.42), Math.min(0.56, hsl.l + 0.2));
