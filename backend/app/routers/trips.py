@@ -4,9 +4,8 @@ from app import store
 from app.deps import get_current_user
 from app.models import (JoinIn, LeaderboardEntry, MissionOut, TripCreate,
                         TripOut)
-from app.services.ai import generate_missions
-from app.services.mission_planner import generate_plan
-from app.services.places import fetch_places_along_route
+from app.services.ai import (generate_missions, generate_trip_plan,
+                             plan_checkpoints)
 from app.services.timers import is_expired
 
 router = APIRouter(prefix="/trips", tags=["trips"])
@@ -14,6 +13,15 @@ router = APIRouter(prefix="/trips", tags=["trips"])
 
 def _trip_out(trip: dict) -> dict:
     return {**trip, "members": store.get_members(trip["id"])}
+
+
+def _players(trip_id: str) -> list[dict]:
+    """Members with their saved preferences, in the shape the mission engine takes."""
+    return [
+        {"id": m["user_id"], "name": m["display_name"],
+         "preferences": (store.get_user(m["user_id"]) or {}).get("preferences", {})}
+        for m in store.get_members(trip_id)
+    ]
 
 
 @router.get("", response_model=list[TripOut])
@@ -46,30 +54,27 @@ def get_trip(trip_id: str, current=Depends(get_current_user)):
 
 @router.post("/{trip_id}/start", response_model=list[MissionOut])
 def start_trip(trip_id: str, current=Depends(get_current_user)):
-    """Set trip active and generate the AI mission deck for all members."""
+    """Set trip active and generate the mission deck for all members.
+
+    Runs mission_generator.md once: the rich plan is saved on the trip (GET
+    /plan), its checkpoints become business rows, and the flattened missions are
+    what this returns. No AI key / AI failure -> fallback deck, no plan.
+    """
     trip = store.get_trip(trip_id)
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
 
-    players = [
-        {"id": m["user_id"], "name": m["display_name"],
-         "preferences": (store.get_user(m["user_id"]) or {}).get("preferences", {})}
-        for m in store.get_members(trip_id)
-    ]
+    players = _players(trip_id)
+    plan = generate_trip_plan(trip, players)
 
-    # Discover real places along the route (Gemini Maps grounding; [] if disabled)
-    interests = sorted({
-        i for p in players for i in (p["preferences"].get("interests") or [])
-    })
-    places = fetch_places_along_route(
-        origin=trip.get("origin"), destination=trip.get("destination"),
-        vibe=trip.get("vibe"), interests=interests,
-    )
-    name_to_business_id = store.save_businesses(places)
+    name_to_business_id: dict[str, str] = {}
+    if plan:
+        store.save_plan(trip_id, plan)
+        name_to_business_id = store.save_businesses(plan_checkpoints(plan))
 
-    mission_dicts = generate_missions(trip, players, places=places)
+    mission_dicts = generate_missions(trip, players, plan=plan)
 
-    # Link missions tagged with a real place to its business record
+    # Link each mission to the business row for its checkpoint
     for m in mission_dicts:
         bn = m.get("business_name")
         if bn and bn in name_to_business_id:
@@ -82,34 +87,20 @@ def start_trip(trip_id: str, current=Depends(get_current_user)):
 
 @router.post("/{trip_id}/plan")
 def plan_trip(trip_id: str, current=Depends(get_current_user)):
-    """Rich, route-aware plan via mission_generator.md + the LLM.
-
-    Returns legs, per-member checkpoints (each with a Google Maps link), shared
-    checkpoints, scoring, and a summary. Needs GEMINI_API_KEY; 503 if unavailable.
+    """Rich, route-aware plan via mission_generator.md + the LLM, without the
+    flat mission deck. Legs, per-member checkpoints (coords + map links), shared
+    checkpoints, scoring, summary. 503 if no AI provider is configured/working.
     """
     trip = store.get_trip(trip_id)
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
 
-    members = []
-    for m in store.get_members(trip_id):
-        prefs = (store.get_user(m["user_id"]) or {}).get("preferences", {})
-        constraints = [prefs["diet"]] if prefs.get("diet") else []
-        if prefs.get("adventure_level"):
-            constraints.append(prefs["adventure_level"])
-        members.append({
-            "name": m["display_name"],
-            "preferences": prefs.get("interests") or [],
-            "dislikes": [],
-            "constraints": constraints,
-            "budget_per_person": prefs.get("budget"),
-        })
-
-    plan = generate_plan(trip, members)
+    plan = generate_trip_plan(trip, _players(trip_id))
     if not plan:
         raise HTTPException(
             status_code=503,
-            detail="Mission planner unavailable (set GEMINI_API_KEY / check quota).",
+            detail="Mission planner unavailable (set REPLICATE_API_KEY or "
+                   "GEMINI_API_KEY / check quota).",
         )
     store.save_plan(trip_id, plan)
     store.set_trip_status(trip_id, "active")

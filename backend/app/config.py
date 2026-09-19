@@ -1,7 +1,7 @@
 """Central settings, loaded from environment / .env.
 
 Everything is optional so the API can boot for local dev even before
-Supabase / Anthropic keys are filled in (endpoints degrade gracefully).
+Supabase / Replicate keys are filled in (endpoints degrade gracefully).
 """
 from functools import lru_cache
 
@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
 
-    anthropic_api_key: str = ""
-    claude_model: str = "claude-sonnet-5"
+    replicate_api_key: str = ""
+    replicate_model: str = "gemini-3.5-flash"
 
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.5-flash"
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     @property
     def ai_enabled(self) -> bool:
-        return bool(self.anthropic_api_key)
+        return bool(self.replicate_api_key)
 
     @property
     def places_enabled(self) -> bool:
