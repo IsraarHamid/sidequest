@@ -48,26 +48,28 @@ export const CreateTripScreen = () => {
   const [questType, setQuestType] = useState<QuestType | null>(null);
   const [stickers, setStickers] = useState<PlacedSticker[]>([]);
   const [bgColor, setBgColor] = useState("#FFFFFF");
-  const [createdTrip, setCreatedTrip] = useState<Trip | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [created, setCreated] = useState<Trip | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [shared, setShared] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Create the trip up front (on Continue) so the real, server-generated
+  // invite code exists to show on the ticket the host is designing. Reused if
+  // the host steps back and forward again.
   const handleContinue = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!startLocation.trim() || !endLocation.trim() || creating) return;
-    if (createdTrip) {
+    if (!startLocation.trim() || !endLocation.trim() || submitting) return;
+    if (created) {
       setStep("ticket");
       return;
     }
-    setCreating(true);
+    setSubmitting(true);
     setError(null);
     try {
       await ensureUser();
       const fmt = (d?: Date) =>
         d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : undefined;
-      const created = await api.createTrip({
+      const trip = await api.createTrip({
         name: endLocation.trim(),
         origin: startLocation.trim(),
         destination: endLocation.trim(),
@@ -75,41 +77,40 @@ export const CreateTripScreen = () => {
         start_date: fmt(dateRange.from),
         end_date: fmt(dateRange.to),
       });
-      setCreatedTrip(created);
+      setCreated(trip);
       setStep("ticket");
     } catch {
       setError("Couldn't create the trip. Please try again.");
     } finally {
-      setCreating(false);
+      setSubmitting(false);
     }
   };
 
   const handleShareInvite = async () => {
-    if (submitting) return;
+    if (submitting || !created) return;
     setSubmitting(true);
     setError(null);
     try {
-      if (!createdTrip) return;
-      try {
-        window.localStorage.setItem(
-          ticketDesignKey(createdTrip.id),
-          JSON.stringify({ bgColor, stickers }),
-        );
-      } catch {
-        /* ignore (private mode etc.) */
-      }
-      const url = joinLink(createdTrip.join_code);
+      window.localStorage.setItem(
+        ticketDesignKey(created.id),
+        JSON.stringify({ bgColor, stickers }),
+      );
+    } catch {
+      /* ignore (private mode etc.) */
+    }
+    try {
+      const url = joinLink(created.join_code);
       if (navigator.share) {
         await navigator.share({
-          title: `${createdTrip.name} invite`,
-          text: `Join my SideQuest trip with code ${createdTrip.join_code}.`,
+          title: `${created.name} invite`,
+          text: `Join my SideQuest trip with code ${created.join_code}.`,
           url,
         });
       } else {
         await navigator.clipboard.writeText(url);
         setShared(true);
       }
-      router.push(`/trips/${createdTrip.id}/preferences`);
+      router.push(`/trips/${created.id}/preferences`);
     } catch {
       setError("Couldn't share the invite. Please try again.");
     } finally {
@@ -158,10 +159,14 @@ export const CreateTripScreen = () => {
                   onQuestTypeChange={setQuestType}
                 />
               </div>
-              <button type="submit" className={cn(actionClassName, "bg-[#121212]")}>
-                {creating ? "Creating…" : "Continue"}
-              </button>
               {error && <p className="font-sans text-[13px] font-medium text-[#D0392F]">{error}</p>}
+              <button
+                type="submit"
+                disabled={submitting}
+                className={cn(actionClassName, "bg-[#121212] disabled:opacity-60")}
+              >
+                {submitting ? "Creating…" : "Continue"}
+              </button>
             </form>
           ) : (
             <div className="flex w-full flex-1 flex-col items-center justify-between gap-[22px]">
@@ -171,7 +176,7 @@ export const CreateTripScreen = () => {
                   onStickersChange={setStickers}
                   bgColor={bgColor}
                   onBgColorChange={setBgColor}
-                  inviteCode={createdTrip?.join_code}
+                  inviteCode={created?.join_code}
                 />
               </div>
 
