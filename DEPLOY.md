@@ -23,7 +23,8 @@ fallback.
   - Frontend build → `NEXT_PUBLIC_API_BASE_URL` = the backend's public URL.
   - Backend env → `CORS_ORIGINS` = the frontend's public URL (comma-separated).
 
-Backend env vars: `GEMINI_API_KEY`, `GEMINI_MODEL`, `ANTHROPIC_API_KEY` (optional),
+Backend env vars: `GEMINI_API_KEY`, `GEMINI_MODEL`, `REPLICATE_API_KEY` /
+`REPLICATE_MODEL` (optional),
 `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` (when wired), `CORS_ORIGINS`, `PORT`.
 
 ---
