@@ -38,11 +38,13 @@ export const TicketDesigner = ({
   onStickersChange,
   bgColor,
   onBgColorChange,
+  inviteCode,
 }: {
   stickers: PlacedSticker[];
   onStickersChange: (stickers: PlacedSticker[]) => void;
   bgColor: string;
   onBgColorChange: (color: string) => void;
+  inviteCode?: string;
 }) => {
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ src: string; x: number; y: number; movingId: string | null } | null>(
@@ -156,9 +158,15 @@ export const TicketDesigner = ({
         <div className="box-border flex h-[120px] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-b-[25px] bg-white px-5">
           <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">INVITE CODE</span>
           <div className="flex items-end gap-1.5">
-            {[0, 0, 0, 0].map((_, i) => (
-              <span key={i} className="font-mono text-4xl leading-none font-medium text-[#4A3B2E]/20">
-                0
+            {Array.from({ length: 5 }, (_, i) => inviteCode?.[i] ?? "0").map((digit, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "font-mono text-4xl leading-none font-medium",
+                  digit === "0" && !inviteCode ? "text-[#4A3B2E]/20" : "text-[#4A3B2E]",
+                )}
+              >
+                {digit}
               </span>
             ))}
           </div>

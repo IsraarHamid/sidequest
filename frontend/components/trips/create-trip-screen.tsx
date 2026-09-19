@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import { cn } from "cn";
 import { TripTicket, type QuestType } from "@/components/trips/trip-ticket";
 import { TicketDesigner, type PlacedSticker } from "@/components/trips/ticket-designer";
-import { api, ensureUser } from "@/lib/api";
+import { api, ensureUser, joinLink, type Trip } from "@/lib/api";
 
 const actionClassName = cn(
   "box-border flex h-12 w-full shrink-0 flex-row items-center justify-center rounded-full px-8",
@@ -48,18 +48,20 @@ export const CreateTripScreen = () => {
   const [questType, setQuestType] = useState<QuestType | null>(null);
   const [stickers, setStickers] = useState<PlacedSticker[]>([]);
   const [bgColor, setBgColor] = useState("#FFFFFF");
+  const [createdTrip, setCreatedTrip] = useState<Trip | null>(null);
+  const [creating, setCreating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [shared, setShared] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleContinue = (event: FormEvent<HTMLFormElement>) => {
+  const handleContinue = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!startLocation.trim() || !endLocation.trim()) return;
-    setStep("ticket");
-  };
-
-  const handleCreateInvite = async () => {
-    if (submitting) return;
-    setSubmitting(true);
+    if (!startLocation.trim() || !endLocation.trim() || creating) return;
+    if (createdTrip) {
+      setStep("ticket");
+      return;
+    }
+    setCreating(true);
     setError(null);
     try {
       await ensureUser();
@@ -73,17 +75,44 @@ export const CreateTripScreen = () => {
         start_date: fmt(dateRange.from),
         end_date: fmt(dateRange.to),
       });
+      setCreatedTrip(created);
+      setStep("ticket");
+    } catch {
+      setError("Couldn't create the trip. Please try again.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleShareInvite = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (!createdTrip) return;
       try {
         window.localStorage.setItem(
-          ticketDesignKey(created.id),
+          ticketDesignKey(createdTrip.id),
           JSON.stringify({ bgColor, stickers }),
         );
       } catch {
         /* ignore (private mode etc.) */
       }
-      router.push(`/trips/${created.id}/preferences`);
+      const url = joinLink(createdTrip.join_code);
+      if (navigator.share) {
+        await navigator.share({
+          title: `${createdTrip.name} invite`,
+          text: `Join my SideQuest trip with code ${createdTrip.join_code}.`,
+          url,
+        });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setShared(true);
+      }
+      router.push(`/trips/${createdTrip.id}/preferences`);
     } catch {
-      setError("Couldn't create the trip. Please try again.");
+      setError("Couldn't share the invite. Please try again.");
+    } finally {
       setSubmitting(false);
     }
   };
@@ -130,8 +159,9 @@ export const CreateTripScreen = () => {
                 />
               </div>
               <button type="submit" className={cn(actionClassName, "bg-[#121212]")}>
-                Continue
+                {creating ? "Creating…" : "Continue"}
               </button>
+              {error && <p className="font-sans text-[13px] font-medium text-[#D0392F]">{error}</p>}
             </form>
           ) : (
             <div className="flex w-full flex-1 flex-col items-center justify-between gap-[22px]">
@@ -141,6 +171,7 @@ export const CreateTripScreen = () => {
                   onStickersChange={setStickers}
                   bgColor={bgColor}
                   onBgColorChange={setBgColor}
+                  inviteCode={createdTrip?.join_code}
                 />
               </div>
 
@@ -149,14 +180,14 @@ export const CreateTripScreen = () => {
                 <button
                   type="button"
                   disabled={submitting}
-                  onClick={handleCreateInvite}
+                  onClick={handleShareInvite}
                   className={cn(
                     actionClassName,
                     "bg-[#121212] disabled:opacity-60",
                     "[@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[0_4px_12px_rgba(18,18,18,0.18)]",
                   )}
                 >
-                  {submitting ? "Creating…" : "Create invite"}
+                  {submitting ? "Sharing…" : shared ? "Invite shared" : "Share invite"}
                 </button>
               </div>
             </div>
