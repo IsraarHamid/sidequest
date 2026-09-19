@@ -226,13 +226,28 @@ def get_members(trip_id: str) -> list[dict]:
     return out
 
 
+def _trip_cover(trip_id: str) -> str | None:
+    """The most recent mission photo for this trip, by ANY member — used as the
+    trip's cover so it shows for everyone, not just the uploader."""
+    mids = [m["id"] for m in (_sb().table("missions").select("id")
+                              .eq("trip_id", trip_id).execute().data or [])]
+    if not mids:
+        return None
+    resp = (_sb().table("mission_completions").select("photo_url, completed_at")
+            .in_("mission_id", mids).not_.is_("photo_url", "null")
+            .order("completed_at", desc=True).limit(1).execute())
+    d = resp.data or []
+    return d[0]["photo_url"] if d else None
+
+
 def list_trips_for_user(user_id: str) -> list[dict]:
     mem = _sb().table("trip_members").select("trip_id").eq("user_id", user_id).execute()
     trip_ids = [m["trip_id"] for m in (mem.data or [])]
     if not trip_ids:
         return []
     resp = _sb().table("trips").select("*").in_("id", trip_ids).execute()
-    return [{**t, "members": get_members(t["id"])} for t in (resp.data or [])]
+    return [{**t, "members": get_members(t["id"]), "cover_photo_url": _trip_cover(t["id"])}
+            for t in (resp.data or [])]
 
 
 def join_trip(join_code: str, user_id: str) -> dict | None:

@@ -255,7 +255,7 @@ export const TripsDashboard = () => {
                 destination={trip.destination ?? trip.name}
                 href={`/trips/${trip.id}/missions`}
                 layout="loose"
-                imageUrl={coverByTrip[trip.id]}
+                imageUrl={trip.cover_photo_url ?? coverByTrip[trip.id]}
               />
             ))}
           </div>
