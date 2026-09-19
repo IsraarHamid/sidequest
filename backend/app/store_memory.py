@@ -135,6 +135,7 @@ def create_trip(created_by: str, data: dict) -> dict:
         "origin": data.get("origin"),
         "destination": data.get("destination"),
         "vibe": data.get("vibe"),
+        "quest_type": data.get("quest_type"),
         "status": "draft",
         "join_code": _join_code(),
         "created_by": created_by,

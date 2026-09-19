@@ -53,11 +53,15 @@ class UpdateProfileIn(BaseModel):
 
 
 # ---- Trips ----
+QuestType = Literal["solo", "together"]
+
+
 class TripCreate(BaseModel):
     name: str
-    origin: Optional[str] = None
-    destination: Optional[str] = None
+    origin: Optional[str] = None        # start destination (journey planning)
+    destination: Optional[str] = None   # end destination (journey planning)
     vibe: Optional[str] = None
+    quest_type: Optional[QuestType] = None  # solo = mostly per-player, together = group
     start_date: Optional[str] = None    # e.g. "2026-10-12" (display + planning)
     end_date: Optional[str] = None
     ends_at: Optional[datetime] = None  # optional overall trip countdown
@@ -78,6 +82,7 @@ class TripOut(BaseModel):
     origin: Optional[str] = None
     destination: Optional[str] = None
     vibe: Optional[str] = None
+    quest_type: Optional[QuestType] = None
     status: TripStatus
     join_code: str
     created_by: str

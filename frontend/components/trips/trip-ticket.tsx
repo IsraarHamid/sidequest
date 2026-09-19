@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { type DateRange } from "react-day-picker";
 import { cn } from "cn";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
+import { CITY_COUNTRY_OPTIONS } from "@/lib/cities";
 
 export type QuestType = "solo" | "together";
 
@@ -209,6 +210,27 @@ const QuestTypeToggle = ({
   );
 };
 
+const normalize = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+const fuzzyScore = (value: string, query: string) => {
+  const normalizedValue = normalize(value);
+  const normalizedQuery = normalize(query).trim();
+  if (!normalizedQuery) return 0;
+  if (normalizedValue.startsWith(normalizedQuery)) return 0;
+  if (normalizedValue.includes(normalizedQuery)) return 1;
+
+  let valueIndex = -1;
+  let gaps = 0;
+  for (const character of normalizedQuery) {
+    const nextIndex = normalizedValue.indexOf(character, valueIndex + 1);
+    if (nextIndex === -1) return null;
+    gaps += nextIndex - valueIndex - 1;
+    valueIndex = nextIndex;
+  }
+  return 2 + gaps;
+};
+
 const LocationField = ({
   id,
   label,
@@ -221,22 +243,108 @@ const LocationField = ({
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
-}) => (
-  <label htmlFor={id} className="flex flex-col">
-    <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">{label}</span>
-    <input
-      id={id}
-      type="text"
-      required
-      value={value}
-      placeholder={placeholder}
-      spellCheck={false}
-      autoComplete="off"
-      onChange={(event) => onChange(event.target.value)}
-      className="w-full border-0 bg-transparent p-0 font-mono text-[15px] font-medium text-[#4A3B2E] caret-[#4A3B2E] outline-none placeholder:text-[#4A3B2E]/20 selection:bg-[#DDD2C0] selection:text-[#4A3B2E] focus-visible:outline-none"
-    />
-  </label>
-);
+}) => {
+  const fieldRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const suggestions = useMemo(() => {
+    const matches: Array<{ option: string; index: number; score: number }> = [];
+    CITY_COUNTRY_OPTIONS.forEach((option, index) => {
+      const score = fuzzyScore(option, value);
+      if (score !== null) matches.push({ option, index, score });
+    });
+    return matches.sort((a, b) => a.score - b.score || a.index - b.index).slice(0, 6);
+  }, [value]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!fieldRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "ArrowDown") {
+      if (suggestions.length === 0) return;
+      event.preventDefault();
+      setOpen(true);
+      setHighlightedIndex((index) => Math.min(index + 1, suggestions.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setHighlightedIndex((index) => Math.max(index - 1, 0));
+    } else if (event.key === "Enter" && open && suggestions[highlightedIndex]) {
+      event.preventDefault();
+      onChange(suggestions[highlightedIndex].option);
+      setOpen(false);
+    } else if (event.key === "Escape") {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div ref={fieldRef} className="relative">
+      <label htmlFor={id} className="flex flex-col">
+        <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">{label}</span>
+        <input
+          id={id}
+          type="text"
+          required
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={open}
+          aria-controls={`${id}-suggestions`}
+          aria-activedescendant={open && suggestions.length > 0 ? `${id}-option-${highlightedIndex}` : undefined}
+          value={value}
+          placeholder={placeholder}
+          spellCheck={false}
+          autoComplete="off"
+          onFocus={() => setOpen(true)}
+          onKeyDown={handleKeyDown}
+          onChange={(event) => {
+            onChange(event.target.value);
+            setOpen(true);
+            setHighlightedIndex(0);
+          }}
+          className="w-full border-0 bg-transparent p-0 font-mono text-[15px] font-medium text-[#4A3B2E] caret-[#4A3B2E] outline-none placeholder:text-[#4A3B2E]/20 selection:bg-[#DDD2C0] selection:text-[#4A3B2E] focus-visible:outline-none"
+        />
+      </label>
+
+      {open && suggestions.length > 0 && (
+        <div
+          id={`${id}-suggestions`}
+          role="listbox"
+          aria-label={`${label.toLowerCase()} suggestions`}
+          className="absolute top-full left-0 z-30 mt-2 w-[calc(100%+24px)] overflow-hidden rounded-xl border border-[#DDD2C0] bg-[#F2F2ED] p-1 shadow-[0_4px_16px_0_#4A3B2E24]"
+        >
+          {suggestions.map(({ option }, index) => (
+            <button
+              key={option}
+              id={`${id}-option-${index}`}
+              type="button"
+              role="option"
+              aria-selected={index === highlightedIndex}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onChange(option);
+                setOpen(false);
+                setHighlightedIndex(0);
+              }}
+              className={cn(
+                "flex w-full items-center rounded-lg px-3 py-2 text-left font-mono text-[12px] text-[#4A3B2E]",
+                "focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#4A3B2E]",
+                index === highlightedIndex && "bg-[#DDD2C0]",
+              )}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const TripTicket = ({
   startLocation,
@@ -259,7 +367,7 @@ export const TripTicket = ({
 }) => {
   return (
     <div className="login-rise relative flex w-[254px] max-w-full shrink-0 flex-col" aria-label="Trip ticket">
-      <div className="box-border flex h-[314px] w-full flex-col items-center justify-end gap-6 overflow-hidden rounded-[25px] bg-white pt-[45px] pr-[35px] pb-[19px] pl-5">
+      <div className="box-border flex h-[314px] w-full flex-col items-center justify-end gap-6 overflow-visible rounded-[25px] bg-white pt-[45px] pr-[35px] pb-[19px] pl-5">
         <div className="flex w-full flex-col gap-4">
           <LocationField
             id="trip-start-location"
