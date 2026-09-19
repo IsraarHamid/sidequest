@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { BottomNav } from "@/components/trip-quest/bottom-nav";
 import { MissionCard } from "@/components/trip-quest/mission-card";
 import { api, isAuthError, type Mission as ApiMission, type Trip } from "@/lib/api";
@@ -41,9 +41,14 @@ export default function MissionsListPage() {
 
   const load = useCallback(async () => {
     try {
-      const [t, ms] = await Promise.all([api.getTrip(tripId), api.listMissions(tripId)]);
-      setTrip(t);
-      setMissions(ms);
+      setTrip(await api.getTrip(tripId));
+    } catch (e) {
+      if (isAuthError(e)) router.replace("/login");
+      else setError("Couldn't load trip details. Is the backend running?");
+    }
+
+    try {
+      setMissions(await api.listMissions(tripId));
     } catch (e) {
       if (isAuthError(e)) router.replace("/login");
       else setError("Couldn't load missions. Is the backend running?");
@@ -73,6 +78,8 @@ export default function MissionsListPage() {
   const group = missions.filter((m) => m.type === "group" && m.status !== "completed").map((m) => toCard(m, tripId));
   const completed = missions.filter((m) => m.status === "completed").map((m) => toCard(m, tripId));
   const totalPoints = missions.reduce((sum, m) => sum + m.points, 0);
+  const origin = trip?.origin || (loading ? "Loading…" : "Not set");
+  const destination = trip?.destination || trip?.name || (loading ? "Loading…" : "Not set");
 
   return (
     <div className="min-h-svh w-full bg-[#F2F2ED] flex flex-col">
@@ -81,7 +88,7 @@ export default function MissionsListPage() {
           <div className="box-border w-full h-fit shrink-0 flex flex-row gap-0 justify-between items-center">
             <button
               type="button"
-              onClick={() => router.push(`/trips/${tripId}`)}
+              onClick={() => router.push("/")}
               className="box-border w-[34px] h-[34px] shrink-0 flex justify-center items-center bg-white/60 rounded-full"
               aria-label="Back"
             >
@@ -104,6 +111,25 @@ export default function MissionsListPage() {
             </div>
             <div className="text-[22px]/[1] box-border text-[#2B2620] font-hand [transform:rotate(-2deg)]">
               {totalPoints}pts
+            </div>
+          </div>
+
+          <div
+            aria-label="Trip route"
+            className="box-border flex w-full items-center gap-3 rounded-2xl bg-[#FBF7F0] px-4 py-3"
+          >
+            <div className="min-w-0 flex-1 text-left">
+              <div className="font-['Geist_Mono',system-ui,sans-serif] text-[10px] uppercase tracking-[1px] text-[#8A7A69]">
+                Start location
+              </div>
+              <div className="truncate font-sans text-[14px] font-semibold text-[#4A3B2E]">{origin}</div>
+            </div>
+            <ArrowRight aria-hidden="true" className="size-4 shrink-0 text-[#121212]" />
+            <div className="min-w-0 flex-1 text-right">
+              <div className="font-['Geist_Mono',system-ui,sans-serif] text-[10px] uppercase tracking-[1px] text-[#8A7A69]">
+                End location
+              </div>
+              <div className="truncate font-sans text-[14px] font-semibold text-[#4A3B2E]">{destination}</div>
             </div>
           </div>
 
