@@ -170,10 +170,10 @@ export const TripsDashboard = () => {
             <Link href="/trips/new" aria-label="Create a new trip" className="relative block shrink-0">
               <div className="pointer-events-none">
                 <TripTicket
-                  origin=""
-                  onOriginChange={() => {}}
-                  destination=""
-                  onDestinationChange={() => {}}
+                  startLocation=""
+                  onStartLocationChange={() => {}}
+                  endLocation=""
+                  onEndLocationChange={() => {}}
                   dateRange={{ from: getToday(), to: undefined }}
                   onDateRangeChange={() => {}}
                   questType={null}

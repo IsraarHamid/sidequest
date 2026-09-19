@@ -209,23 +209,49 @@ const QuestTypeToggle = ({
   );
 };
 
-const placeInputClassName =
-  "w-full border-0 bg-transparent p-0 font-mono text-[15px] font-medium text-[#4A3B2E] caret-[#4A3B2E] outline-none placeholder:text-[#4A3B2E]/20 selection:bg-[#DDD2C0] selection:text-[#4A3B2E] focus-visible:outline-none";
+const LocationField = ({
+  id,
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+}) => (
+  <label htmlFor={id} className="flex flex-col">
+    <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">{label}</span>
+    <input
+      id={id}
+      type="text"
+      required
+      value={value}
+      placeholder={placeholder}
+      spellCheck={false}
+      autoComplete="off"
+      onChange={(event) => onChange(event.target.value)}
+      className="w-full border-0 bg-transparent p-0 font-mono text-[15px] font-medium text-[#4A3B2E] caret-[#4A3B2E] outline-none placeholder:text-[#4A3B2E]/20 selection:bg-[#DDD2C0] selection:text-[#4A3B2E] focus-visible:outline-none"
+    />
+  </label>
+);
 
 export const TripTicket = ({
-  origin,
-  onOriginChange,
-  destination,
-  onDestinationChange,
+  startLocation,
+  onStartLocationChange,
+  endLocation,
+  onEndLocationChange,
   dateRange,
   onDateRangeChange,
   questType,
   onQuestTypeChange,
 }: {
-  origin: string;
-  onOriginChange: (value: string) => void;
-  destination: string;
-  onDestinationChange: (value: string) => void;
+  startLocation: string;
+  onStartLocationChange: (value: string) => void;
+  endLocation: string;
+  onEndLocationChange: (value: string) => void;
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
   questType: QuestType | null;
@@ -233,39 +259,22 @@ export const TripTicket = ({
 }) => {
   return (
     <div className="login-rise relative flex w-[254px] max-w-full shrink-0 flex-col" aria-label="Trip ticket">
-      <div className="box-border flex h-[262px] w-full flex-col items-center justify-end gap-4 overflow-hidden rounded-[25px] bg-white pt-[40px] pr-[35px] pb-[19px] pl-5">
-        <div className="flex w-full flex-col">
-          <label htmlFor="trip-origin" className="flex flex-col">
-            <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">FROM</span>
-            <input
-              id="trip-origin"
-              type="text"
-              required
-              value={origin}
-              placeholder="START LOCATION"
-              spellCheck={false}
-              autoComplete="off"
-              onChange={(event) => onOriginChange(event.target.value)}
-              className={placeInputClassName}
-            />
-          </label>
-        </div>
-
-        <div className="flex w-full flex-col">
-          <label htmlFor="trip-destination" className="flex flex-col">
-            <span className="font-mono text-[11px] tracking-[1px] text-[#4A3B2E]">TO</span>
-            <input
-              id="trip-destination"
-              type="text"
-              required
-              value={destination}
-              placeholder="END LOCATION"
-              spellCheck={false}
-              autoComplete="off"
-              onChange={(event) => onDestinationChange(event.target.value)}
-              className={placeInputClassName}
-            />
-          </label>
+      <div className="box-border flex h-[314px] w-full flex-col items-center justify-end gap-6 overflow-hidden rounded-[25px] bg-white pt-[45px] pr-[35px] pb-[19px] pl-5">
+        <div className="flex w-full flex-col gap-4">
+          <LocationField
+            id="trip-start-location"
+            label="START LOCATION"
+            placeholder="ENTER START LOCATION"
+            value={startLocation}
+            onChange={onStartLocationChange}
+          />
+          <LocationField
+            id="trip-end-location"
+            label="END LOCATION"
+            placeholder="ENTER END LOCATION"
+            value={endLocation}
+            onChange={onEndLocationChange}
+          />
         </div>
 
         <TicketDateRange range={dateRange} onRangeChange={onDateRangeChange} />
