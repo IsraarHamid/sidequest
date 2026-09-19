@@ -116,6 +116,18 @@ export const SANDBOX_SCREEN_GROUPS: SandboxScreenGroup[] = [
       },
     ],
   },
+  {
+    id: "components",
+    label: "Components",
+    screens: [
+      {
+        id: "quest-cards",
+        label: "Quest cards",
+        href: "/quest-cards",
+        match: (pathname) => pathname === "/quest-cards",
+      },
+    ],
+  },
 ];
 
 export const DEFAULT_SANDBOX_HREF = SANDBOX_SCREEN_GROUPS[0].screens[0].href;
