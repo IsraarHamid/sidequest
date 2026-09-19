@@ -66,7 +66,7 @@ export default function JoinTripPage() {
 
   return (
     <div className="min-h-svh w-full bg-[#F2F2ED]">
-      <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-[22px] px-5 pt-4 pb-6">
+      <div className="mx-auto flex min-h-svh w-full max-w-[360px] flex-col items-center gap-[22px] px-5 pt-4 pb-6">
         <div className="flex w-full items-center gap-3">
           <button
             type="button"
