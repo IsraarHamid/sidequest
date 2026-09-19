@@ -30,7 +30,7 @@ export function BottomNav({ tripId }: { tripId: string }) {
   ];
 
   return (
-    <div className="sticky bottom-0 box-border w-full h-fit shrink-0 flex flex-row gap-0 p-[0px_16px_12px_16px] justify-start items-start bg-[#F4EFE4]">
+    <div className="sticky bottom-0 box-border w-full h-fit shrink-0 flex flex-row gap-0 p-[0px_16px_12px_16px] justify-start items-start bg-[#F2F2ED]">
       <div className="box-border flex-1 h-[60px] [box-shadow:0px_4px_12px_0px_#4A3B2E24] flex flex-row gap-[4px] p-[6px] justify-start items-center bg-[#FBF7F0] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px] rounded-full">
         {tabs.map((tab) => {
           const isActive =

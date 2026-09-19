@@ -40,6 +40,31 @@ const logoutItemClassName = cn(
   "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-[#D0392F]/8",
 );
 
+const scallopedPathD =
+  "M0 0a5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42858 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42858 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875z";
+
+/** Scalloped postage-stamp frame (73×79) — the shape shared by the interactive
+ * StampAvatar menu trigger and any read-only preview of someone's avatar. */
+export const StampFrame = ({ children }: { children: React.ReactNode }) => (
+  <div className="relative h-[79px] w-[73px] shrink-0">
+    <svg
+      viewBox="0 0 73 79"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className="absolute inset-0 h-[79px] w-[73px] overflow-visible shadow-[0px_1px_2px_0px_#4A3B2E14]"
+    >
+      <path
+        d={scallopedPathD}
+        fill="#FBF7F0"
+        stroke="#DDD2C0"
+        strokeWidth="1"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+    <div className="absolute top-2 left-2 z-[1]">{children}</div>
+  </div>
+);
+
 /** Scalloped postage-stamp trigger. Opens the Pencil "Popup Menu"
  * (Profile, Adjust preferences, Logout) instead of linking directly. */
 export const StampAvatar = ({
@@ -60,7 +85,7 @@ export const StampAvatar = ({
           className="absolute inset-0 h-[79px] w-[73px] overflow-visible shadow-[0px_1px_2px_0px_#4A3B2E14]"
         >
           <path
-            d="M0 0a5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42858 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 5.21429 5.21429 0 0 0 10.42857 0 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 4.9375 4.9375 0 0 0 0 9.875 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42858 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 5.21429 5.21429 0 0 0-10.42857 0 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875 4.9375 4.9375 0 0 0 0-9.875z"
+            d={scallopedPathD}
             fill="#FBF7F0"
             stroke="#DDD2C0"
             strokeWidth="1"

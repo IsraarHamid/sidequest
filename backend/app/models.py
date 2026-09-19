@@ -48,6 +48,10 @@ class RegisterIn(BaseModel):
     password: str
 
 
+class UpdateProfileIn(BaseModel):
+    display_name: str
+
+
 # ---- Trips ----
 class TripCreate(BaseModel):
     name: str

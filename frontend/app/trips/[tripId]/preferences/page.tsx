@@ -77,7 +77,7 @@ export default function PreferencesPage() {
   }
 
   return (
-    <div className="min-h-svh w-full bg-[#F4EFE4]">
+    <div className="min-h-svh w-full bg-[#F2F2ED]">
       <div className="mx-auto w-full max-w-[430px]">
         <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[24px] p-[16px_20px_24px_20px] justify-start items-start">
           <PageHeader title="Your preferences" />

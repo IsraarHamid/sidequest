@@ -111,6 +111,21 @@ def set_preferences(user_id: str, prefs: dict) -> dict:
     return users[user_id]
 
 
+def update_user(user_id: str, *, display_name: str | None = None,
+                avatar_url: str | None = None) -> dict:
+    user = users[user_id]
+    if display_name is not None:
+        user["display_name"] = display_name
+        user["initials"] = _initials(display_name)
+    if avatar_url is not None:
+        user["avatar_url"] = avatar_url
+    return user
+
+
+def delete_user(user_id: str) -> None:
+    users.pop(user_id, None)
+
+
 # ---- Trips ----
 def create_trip(created_by: str, data: dict) -> dict:
     tid = _id()

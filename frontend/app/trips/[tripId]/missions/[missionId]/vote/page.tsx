@@ -47,7 +47,7 @@ export default function VoteMissionPage() {
   }
 
   return (
-    <div className="min-h-svh w-full bg-[#F4EFE4]">
+    <div className="min-h-svh w-full bg-[#F2F2ED]">
       <div className="mx-auto w-full max-w-[430px]">
         <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[18px] p-[16px_20px_24px_20px] justify-start items-start">
           <PageHeader title="Rate this mission" />
@@ -78,7 +78,7 @@ export default function VoteMissionPage() {
                     <div className="text-[14px] box-border text-[#4A3B2E] font-[Geist,system-ui,sans-serif] font-semibold">{cat.label}</div>
                     <div className="text-[11px] box-border text-[#8A7A69] font-['Geist_Mono',system-ui,sans-serif]">{counts[cat.id] ?? 0} votes</div>
                   </div>
-                  <div className={`box-border w-[40px] shrink-0 h-[40px] flex flex-row justify-center items-center rounded-full ${isVoted ? "bg-[#121212]" : "bg-[#F4EFE4] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px]"}`}>
+                  <div className={`box-border w-[40px] shrink-0 h-[40px] flex flex-row justify-center items-center rounded-full ${isVoted ? "bg-[#121212]" : "bg-[#F2F2ED] [outline:1px_solid_#DDD2C0] [outline-offset:-0.5px]"}`}>
                     <Plus className="w-[16px] h-[16px] shrink-0" color={isVoted ? "#FBF7F0" : "#4A3B2E"} />
                   </div>
                 </button>

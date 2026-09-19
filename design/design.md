@@ -4,7 +4,7 @@ version: "alpha"
 description: "Collage-energy surfaces made of paper, stickers and real-world photography, wrapped around a functional layer that stays boringly legible."
 colors:
   # --- Foundation (the calm layer) ---
-  background: "#F4EFE4"        /* uncertain: sampled from ref-1 app canvas, warm uncoated paper */
+  background: "#F2F2ED"        /* uncertain: sampled from ref-1 app canvas, warm uncoated paper */
   surface: "#FBF7F0"           /* uncertain: sampled from ref-1 card fill, one step lighter than canvas */
   surface-inverse: "#121212"   /* uncertain: sampled from ref-2 auth buttons, near-black not pure */
   ink: "#4A3B2E"               /* uncertain: sampled from ref-1 body + headline text, warm brown-black */

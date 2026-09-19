@@ -28,7 +28,7 @@ export default function TripLobbyPage() {
 
   if (loading || !trip) {
     return (
-      <div className="min-h-svh w-full bg-[#F4EFE4] flex items-center justify-center">
+      <div className="min-h-svh w-full bg-[#F2F2ED] flex items-center justify-center">
         <p className="font-sans text-[15px] text-[#8A7A69]">Loading lobby…</p>
       </div>
     );
@@ -39,7 +39,7 @@ export default function TripLobbyPage() {
     : "Dates TBD";
 
   return (
-    <div className="min-h-svh w-full bg-[#F4EFE4]">
+    <div className="min-h-svh w-full bg-[#F2F2ED]">
       <div className="mx-auto w-full max-w-[430px]">
         <div className="box-border w-full h-fit shrink-0 flex flex-col gap-[20px] p-[16px_20px_24px_20px] justify-start items-start">
           <PageHeader title="Trip Lobby" />
@@ -73,7 +73,7 @@ export default function TripLobbyPage() {
               type="button"
               onClick={() => { navigator.clipboard?.writeText(trip.join_code); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
               aria-label="Copy invite code"
-              className="box-border w-fit shrink-0 h-[36px] px-3 flex flex-row gap-[6px] justify-center items-center bg-[#F4EFE4] rounded-lg"
+              className="box-border w-fit shrink-0 h-[36px] px-3 flex flex-row gap-[6px] justify-center items-center bg-[#F2F2ED] rounded-lg"
             >
               <Copy className="w-[15px] h-[15px] shrink-0" color="#4A3B2E" />
               {copied && <span className="text-[11px] text-[#3E6B4A] font-sans font-semibold">Copied</span>}
