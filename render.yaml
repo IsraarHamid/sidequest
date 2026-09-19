@@ -1,0 +1,35 @@
+# Render Blueprint — one-click backend deploy for the hackathon submission.
+# Render → New + → Blueprint → pick this repo. It reads this file, pre-fills the
+# non-secret config, and prompts for the values marked `sync: false` (your
+# secrets — never committed). After deploy, set CORS_ORIGINS to the Vercel URL.
+services:
+  - type: web
+    name: sidequest-backend
+    runtime: docker
+    repo: https://github.com/IsraarHamid/sidequest
+    rootDir: backend
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # --- non-secret config (safe in the public repo) ---
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash
+      - key: STORAGE_BUCKET
+        value: mission-photos
+      - key: ADMIN_EMAIL
+        value: betterbash@gmail.com
+      - key: SUPABASE_URL
+        value: https://jejcosxlrytonavuprtt.supabase.co
+      # --- secrets: Render prompts you to paste these (copy from backend/.env) ---
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ANTHROPIC_API_KEY   # optional — leave blank for fallback missions
+        sync: false
+      # --- set after the frontend is live (exact Vercel URL, https, no slash) ---
+      - key: CORS_ORIGINS
+        sync: false
