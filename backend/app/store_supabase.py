@@ -32,16 +32,11 @@ def _join_code() -> str:
     return "".join(random.choices(_CODE_ALPHABET, k=_CODE_LENGTH))
 
 
-def _unique_join_code(attempts: int = 20) -> str:
-    """A 5-digit code not already in use. The space is only 100k, so check for
-    collisions instead of trusting randomness."""
-    for _ in range(attempts):
-        code = _join_code()
-        existing = (_sb().table("trips").select("id")
-                    .eq("join_code", code).limit(1).execute())
-        if not (existing.data or []):
-            return code
-    return _join_code()  # extremely unlikely; accept a tiny collision risk
+def _is_duplicate_code_error(exc: Exception) -> bool:
+    """True if an insert failed because join_code already exists.
+    Postgres unique_violation is SQLSTATE 23505."""
+    s = str(getattr(exc, "code", "")) + " " + str(exc).lower()
+    return "23505" in s or "duplicate key" in s or "join_code" in s
 
 
 def _initials(name: str) -> str:
@@ -171,7 +166,7 @@ def _trips_has_quest_type() -> bool:
 
 
 def create_trip(created_by: str, data: dict) -> dict:
-    row = _clean({
+    base = _clean({
         "id": _id(),
         "name": data["name"],
         "origin": data.get("origin"),
@@ -179,17 +174,30 @@ def create_trip(created_by: str, data: dict) -> dict:
         "vibe": data.get("vibe"),
         "quest_type": data.get("quest_type"),
         "status": "draft",
-        "join_code": _unique_join_code(),
         "created_by": created_by,
         "start_date": data.get("start_date"),
         "end_date": data.get("end_date"),
         "ends_at": data.get("ends_at"),
     })
     if not _trips_has_quest_type():
-        row.pop("quest_type", None)
-    _sb().table("trips").insert(row).execute()
-    _add_member(row["id"], created_by, role="host")
-    return row
+        base.pop("quest_type", None)
+
+    # Race-safe join code: the DB's `join_code unique` constraint is the source
+    # of truth. Generate a random code and insert; if another trip grabbed the
+    # same code in the meantime, retry with a fresh one.
+    last_exc: Exception | None = None
+    for _ in range(25):
+        row = {**base, "join_code": _join_code()}
+        try:
+            _sb().table("trips").insert(row).execute()
+            _add_member(row["id"], created_by, role="host")
+            return row
+        except Exception as exc:  # noqa: BLE001
+            if _is_duplicate_code_error(exc):
+                last_exc = exc
+                continue
+            raise
+    raise RuntimeError("Could not allocate a unique join code") from last_exc
 
 
 def _add_member(trip_id: str, user_id: str, role: str) -> dict:
