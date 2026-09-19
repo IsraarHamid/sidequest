@@ -159,6 +159,15 @@ def _add_member(trip_id: str, user_id: str, role: str) -> dict:
     return member
 
 
+def _trip_cover(trip_id: str) -> str | None:
+    """Most recent mission photo for this trip, by any member."""
+    mids = {m["id"] for m in missions.values() if m["trip_id"] == trip_id}
+    photos = [c for c in completions.values()
+              if c["mission_id"] in mids and c.get("photo_url")]
+    photos.sort(key=lambda c: str(c["completed_at"]), reverse=True)
+    return photos[0]["photo_url"] if photos else None
+
+
 def list_trips_for_user(user_id: str) -> list[dict]:
     """Trips where this user is a member (host or player)."""
     out = []
@@ -166,7 +175,7 @@ def list_trips_for_user(user_id: str) -> list[dict]:
         if any(m["user_id"] == user_id for m in ms):
             trip = trips.get(tid)
             if trip:
-                out.append({**trip, "members": ms})
+                out.append({**trip, "members": ms, "cover_photo_url": _trip_cover(tid)})
     return out
 
 

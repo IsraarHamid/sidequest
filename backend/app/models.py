@@ -89,6 +89,7 @@ class TripOut(BaseModel):
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     ends_at: Optional[datetime] = None  # optional overall trip countdown
+    cover_photo_url: Optional[str] = None  # first mission photo by any member
     members: list[MemberOut] = Field(default_factory=list)
 
 

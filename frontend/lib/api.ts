@@ -109,6 +109,7 @@ export type Trip = {
   destination?: string | null;
   vibe?: string | null;
   quest_type?: "solo" | "together" | null;
+  cover_photo_url?: string | null;
   status: "draft" | "active" | "arrived" | "ended";
   join_code: string;
   created_by: string;
